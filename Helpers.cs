@@ -12,17 +12,18 @@ namespace Modpack
 {
     public static class Helpers
     {
-        public static Sprite loadSpriteFromResources(string path, float pixelsPerUnit)
+        public static Sprite loadSpriteFromResources(string path, float pixelsPerUnit, bool hat = false)
         {
             try
             {
+                var pivot = hat ? new Vector2(0.5f, 0.8f) : new Vector2(0.5f, 0.5f);
                 Texture2D texture = new Texture2D(2, 2, TextureFormat.ARGB32, true);
                 Assembly assembly = Assembly.GetExecutingAssembly();
                 Stream stream = assembly.GetManifestResourceStream(path);
                 var byteTexture = new byte[stream.Length];
                 var read = stream.Read(byteTexture, 0, (int) stream.Length);
                 LoadImage(texture, byteTexture, false);
-                return Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f),
+                return Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), pivot,
                     pixelsPerUnit);
             }
             catch
