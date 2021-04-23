@@ -187,6 +187,30 @@ namespace Modpack
                 name = "trans_2", bounce = false, highUp = true, offset = new Vector2(-0.1f, 0.1f),
                 author = "TheLastShaymin"
             },
+            new HatData
+            {
+                name = "kiraa", bounce = false, highUp = false, offset = new Vector2(-0.1f, 0.5f)
+            },
+            new HatData
+            {
+                name = "oggy", bounce = false, highUp = false, offset = new Vector2(-0.1f, 0.5f)
+            },
+            new HatData
+            {
+                name = "werella", bounce = false, highUp = false, offset = new Vector2(-0.1f, 0.5f)
+            },
+            new HatData
+            {
+                name = "yuki", bounce = false, highUp = false, offset = new Vector2(-0.1f, 0.5f)
+            },
+            new HatData
+            {
+                name = "corpse", bounce = false, highUp = false, offset = new Vector2(-0.1f, 0.2f)
+            },
+            new HatData
+            {
+                name = "sykkuno", bounce = false, highUp = false, offset = new Vector2(-0.1f, 0.6f)
+            },
         };
 
         public static List<uint> TallIds = new List<uint>();

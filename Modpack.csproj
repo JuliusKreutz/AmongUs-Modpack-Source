@@ -1,8 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <TargetFramework>netstandard2.1</TargetFramework>
-        <Version>2.2.1</Version>
-
+        <Version>1.0</Version>
         <Description>Modpack</Description>
         <Authors>Julius Kreutz</Authors>
     </PropertyGroup>
@@ -18,66 +17,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <EmbeddedResource Include="Resources\RepairButton.png" />
-        <EmbeddedResource Include="Resources\CleanButton.png" />
-        <EmbeddedResource Include="Resources\TimeShieldButton.png" />
-        <EmbeddedResource Include="Resources\ShieldButton.png" />
-        <EmbeddedResource Include="Resources\ShiftButton.png" />
-        <EmbeddedResource Include="Resources\SeerButton.png" />
-        <EmbeddedResource Include="Resources\MorphButton.png" />
-        <EmbeddedResource Include="Resources\SampleButton.png" />
-        <EmbeddedResource Include="Resources\CamoButton.png" />
-        <EmbeddedResource Include="Resources\HackerButton.png" />
-        <EmbeddedResource Include="Resources\TrackerButton.png" />
-        <EmbeddedResource Include="Resources\VampireButton.png" />
-        <EmbeddedResource Include="Resources\GarlicButton.png" />
-        <EmbeddedResource Include="Resources\LighterButton.png" />
-        <EmbeddedResource Include="Resources\EraserButton.png" />
-        <EmbeddedResource Include="Resources\TricksterVentButton.png" />
-        <EmbeddedResource Include="Resources\Arrow.png" />
-        <EmbeddedResource Include="Resources\Garlic.png" />
-        <EmbeddedResource Include="Resources\GarlicBackground.png" />
-        <EmbeddedResource Include="Resources\Footprint.png" />
-        <EmbeddedResource Include="Resources\Soul.png" />
-        <EmbeddedResource Include="Resources\AdminTableIcon.png" />
-        <EmbeddedResource Include="Resources\SwapperCheck.png" />
-        <EmbeddedResource Include="Resources\SidekickButton.png" />
-        <EmbeddedResource Include="Resources\PlaceJackInTheBoxButton.png" />
-        <EmbeddedResource Include="Resources\JackInTheBox.png" />
-        <EmbeddedResource Include="Resources\LightsOutButton.png" />
-        <EmbeddedResource Include="Resources\Hats\hat_annamaja.png" />
-        <EmbeddedResource Include="Resources\Hats\hat_annie.png" />
-        <EmbeddedResource Include="Resources\Hats\hat_aphex.png" />
-        <EmbeddedResource Include="Resources\Hats\hat_aplatypuss.png" />
-        <EmbeddedResource Include="Resources\Hats\hat_asexual.png" />
-        <EmbeddedResource Include="Resources\Hats\hat_bisexual.png" />
-        <EmbeddedResource Include="Resources\Hats\hat_bloody.png" />
-        <EmbeddedResource Include="Resources\Hats\hat_breeh.png" />
-        <EmbeddedResource Include="Resources\Hats\hat_cheesy.png" />
-        <EmbeddedResource Include="Resources\Hats\hat_chilled.png" />
-        <EmbeddedResource Include="Resources\Hats\hat_dizzilulu.png" />
-        <EmbeddedResource Include="Resources\Hats\hat_ellum.png" />
-        <EmbeddedResource Include="Resources\Hats\hat_falcone.png" />
-        <EmbeddedResource Include="Resources\Hats\hat_freya.png" />
-        <EmbeddedResource Include="Resources\Hats\hat_gay.png" />
-        <EmbeddedResource Include="Resources\Hats\hat_harrie.png" />
-        <EmbeddedResource Include="Resources\Hats\hat_junkyard.png" />
-        <EmbeddedResource Include="Resources\Hats\hat_kay.png" />
-        <EmbeddedResource Include="Resources\Hats\hat_lexie.png" />
-        <EmbeddedResource Include="Resources\Hats\hat_nonbinary.png" />
-        <EmbeddedResource Include="Resources\Hats\hat_pansexual.png" />
-        <EmbeddedResource Include="Resources\Hats\hat_razz.png" />
-        <EmbeddedResource Include="Resources\Hats\hat_shubble.png" />
-        <EmbeddedResource Include="Resources\Hats\hat_slushie.png" />
-        <EmbeddedResource Include="Resources\Hats\hat_stumpy.png" />
-        <EmbeddedResource Include="Resources\Hats\hat_trans_1.png" />
-        <EmbeddedResource Include="Resources\Hats\hat_trans_2.png" />
-        <EmbeddedResource Include="Resources\Hats\hat_trans_3.png" />
-        <EmbeddedResource Include="Resources\Hats\hat_trans_4.png" />
-        <EmbeddedResource Include="Resources\Hats\hat_vikram_1.png" />
-        <EmbeddedResource Include="Resources\Hats\hat_vikram_2.png" />
-        <EmbeddedResource Include="Resources\Hats\hat_ze.png" />
-        <EmbeddedResource Include="Resources\Hats\hat_zylus.png" />
+        <EmbeddedResource Include="Resources\*.png" />
+        <EmbeddedResource Include="Resources\Hats\*.png" />
     </ItemGroup>
 
     <ItemGroup>
