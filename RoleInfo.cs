@@ -1,18 +1,17 @@
 using System.Collections.Generic;
 using static Modpack.Modpack;
 using UnityEngine;
-using Palette = BLMBFIODBKL;
 
 namespace Modpack
 {
     public class RoleInfo
     {
         public Color color;
-        public string name;
-        public string introDescription;
-        public string shortDescription;
+        public readonly string name;
+        public readonly string introDescription;
+        public readonly string shortDescription;
 
-        RoleInfo(string name, Color color, string introDescription, string shortDescription)
+        private RoleInfo(string name, Color color, string introDescription, string shortDescription)
         {
             this.color = color;
             this.name = name;
@@ -22,7 +21,7 @@ namespace Modpack
 
         public static List<RoleInfo> getRoleInfoForPlayer(PlayerControl p)
         {
-            List<RoleInfo> infos = new List<RoleInfo>();
+            var infos = new List<RoleInfo>();
 
             if (Jester.jester != null && p == Jester.jester)
             {
@@ -70,7 +69,6 @@ namespace Modpack
                     Godfather.color,
                     "Kill all Crewmates",
                     "Kill all Crewmates"));
-                ;
             }
 
             if (Mafioso.mafioso != null && p == Mafioso.mafioso)
@@ -129,6 +127,22 @@ namespace Modpack
                     "Surprise your enemies"));
             }
 
+            if (Cleaner.cleaner != null && p == Cleaner.cleaner)
+            {
+                infos.Add(new RoleInfo("Cleaner",
+                    Cleaner.color,
+                    "Kill everyone and leave no traces",
+                    "Clean up dead bodies"));
+            }
+
+            if (Warlock.warlock != null && p == Warlock.warlock)
+            {
+                infos.Add(new RoleInfo("Warlock",
+                    Warlock.color,
+                    "Curse other players and kill everyone",
+                    "Curse and kill everyone"));
+            }
+
             if (Detective.detective != null && p == Detective.detective)
             {
                 infos.Add(new RoleInfo("Detective",
@@ -181,14 +195,14 @@ namespace Modpack
             {
                 infos.Add(new RoleInfo("Hacker",
                     Hacker.color,
-                    "Hacke to find the <color=#FF1919FF>Impostors</color>",
-                    "Hacke to find the Impostors"));
+                    "Hack to find the <color=#FF1919FF>Impostors</color>",
+                    "Hack to find the Impostors"));
             }
 
             if (Child.child != null && p == Child.child)
             {
-                infos.Add(new RoleInfo(p.PPMOEEPBHJO.FDNMBJOAPFL ? "Bad Child" : "Good Child",
-                    p.PPMOEEPBHJO.FDNMBJOAPFL ? Palette.JPCHLLEJNEH : Child.color,
+                infos.Add(new RoleInfo(p.Data.IsImpostor ? "Bad Child" : "Good Child",
+                    p.Data.IsImpostor ? Palette.ImpostorRed : Child.color,
                     "No one will harm you until you grow up",
                     "No one will harm you"));
             }
@@ -227,8 +241,8 @@ namespace Modpack
 
             if ((Lovers.lover1 != null && p == Lovers.lover1) || (Lovers.lover2 != null && p == Lovers.lover2))
             {
-                infos.Add(new RoleInfo(p.PPMOEEPBHJO.FDNMBJOAPFL ? "ImpLover" : "Lover",
-                    p.PPMOEEPBHJO.FDNMBJOAPFL ? Palette.JPCHLLEJNEH : Lovers.color,
+                infos.Add(new RoleInfo(p.Data.IsImpostor ? "ImpLover" : "Lover",
+                    p.Data.IsImpostor ? Palette.ImpostorRed : Lovers.color,
                     "You are in <color=#FC03BEFF>Love</color>",
                     "You are in love"));
             }
@@ -241,21 +255,20 @@ namespace Modpack
                     "Confuse the Impostors"));
             }
 
-            if (infos.Count == 0 && p.PPMOEEPBHJO.FDNMBJOAPFL)
+            switch (infos.Count)
             {
-                // Just Impostor
-                infos.Add(new RoleInfo("Impostor",
-                    Palette.JPCHLLEJNEH,
-                    "",
-                    "Sabotage and kill everyone"));
-            }
-            else if (infos.Count == 0)
-            {
-                // Just Crewmate
-                infos.Add(new RoleInfo("Crewmate",
-                    Color.white,
-                    "",
-                    "Find the Impostors"));
+                case 0 when p.Data.IsImpostor: // Just Impostor
+                    infos.Add(new RoleInfo("Impostor",
+                        Palette.ImpostorRed,
+                        "",
+                        "Sabotage and kill everyone"));
+                    break;
+                case 0: // Just Crewmate
+                    infos.Add(new RoleInfo("Crewmate",
+                        Color.white,
+                        "",
+                        "Find the Impostors"));
+                    break;
             }
 
             return infos;

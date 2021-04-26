@@ -1,38 +1,33 @@
 using System.Collections.Generic;
 using System;
 using UnityEngine;
-using DeathReason = EGHDCAKGMKI;
 
 namespace Modpack
 {
     public class DeadPlayer
     {
-        public PlayerControl player;
+        public readonly PlayerControl player;
         public DateTime timeOfDeath;
-        public DeathReason deathReason;
-        public PlayerControl killerIfExisting;
+        public readonly PlayerControl killerIfExisting;
 
         public DeadPlayer(PlayerControl player, DateTime timeOfDeath, DeathReason deathReason,
             PlayerControl killerIfExisting)
         {
             this.player = player;
             this.timeOfDeath = timeOfDeath;
-            this.deathReason = deathReason;
             this.killerIfExisting = killerIfExisting;
         }
     }
 
-    static class GameHistory
+    internal static class GameHistory
     {
-        public static List<Tuple<Vector3, DateTime>> localPlayerPositions = new List<Tuple<Vector3, DateTime>>();
+        public static List<Tuple<Vector3, bool>> localPlayerPositions = new List<Tuple<Vector3, bool>>();
         public static List<DeadPlayer> deadPlayers = new List<DeadPlayer>();
-        public static DateTime localVentEnterTimePoint = DateTime.MinValue;
 
         public static void clearGameHistory()
         {
-            localPlayerPositions = new List<Tuple<Vector3, DateTime>>();
+            localPlayerPositions = new List<Tuple<Vector3, bool>>();
             deadPlayers = new List<DeadPlayer>();
-            localVentEnterTimePoint = DateTime.MinValue;
         }
     }
 }

@@ -3,12 +3,12 @@ using UnityEngine;
 
 namespace Modpack
 {
-    class Garlic
+    internal class Garlic
     {
         public static List<Garlic> garlics = new List<Garlic>();
 
-        public GameObject garlic;
-        private GameObject background;
+        public readonly GameObject garlic;
+        private readonly GameObject background;
 
         private static Sprite garlicSprite;
 
@@ -33,7 +33,7 @@ namespace Modpack
             garlic = new GameObject("Garlic");
             background = new GameObject("Background");
             background.transform.SetParent(garlic.transform);
-            Vector3 position = new Vector3(p.x, p.y, PlayerControl.LocalPlayer.transform.position.z + 1f);
+            var position = new Vector3(p.x, p.y, PlayerControl.LocalPlayer.transform.position.z + 1f);
             garlic.transform.position = position;
             garlic.transform.localPosition = position;
             background.transform.localPosition = new Vector3(0, 0, 0.01f);
@@ -55,10 +55,9 @@ namespace Modpack
 
         public static void UpdateAll()
         {
-            foreach (Garlic garlic in garlics)
+            foreach (var garlic in garlics)
             {
-                if (garlic != null)
-                    garlic.Update();
+                garlic?.Update();
             }
         }
 

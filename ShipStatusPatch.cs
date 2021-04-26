@@ -1,9 +1,6 @@
 using HarmonyLib;
 using static Modpack.Modpack;
 using UnityEngine;
-using SystemTypes = BCPJLGGNHBC;
-using SwitchSystem = ABIMJJMBJJM;
-using ISystemType = JBBCJFNFOBB;
 
 namespace Modpack
 {
@@ -13,37 +10,36 @@ namespace Modpack
         [HarmonyPostfix]
         [HarmonyPatch(typeof(ShipStatus), nameof(ShipStatus.CalculateLightRadius))]
         public static bool Prefix(ref float __result, ShipStatus __instance,
-            [HarmonyArgument(0)] GameData.LGBOMGHJELL player)
+            [HarmonyArgument(0)] GameData.PlayerInfo player)
         {
-            ISystemType systemType = __instance.Systems.ContainsKey(SystemTypes.Electrical)
+            var systemType = __instance.Systems.ContainsKey(SystemTypes.Electrical)
                 ? __instance.Systems[SystemTypes.Electrical]
                 : null;
-            if (systemType == null) return true;
-            SwitchSystem switchSystem = systemType.TryCast<SwitchSystem>();
+            var switchSystem = systemType?.TryCast<SwitchSystem>();
             if (switchSystem == null) return true;
 
-            float num = (float) switchSystem.FPHHBGCHEJG / 255f;
+            var num = switchSystem.Value / 255f;
 
-            if (player == null || player.IAGJEKLJCCI) // IsDead
+            if (player == null || player.IsDead) // IsDead
                 __result = __instance.MaxLightRadius;
-            else if (player.FDNMBJOAPFL) // IsImpostor
-                __result = __instance.MaxLightRadius * PlayerControl.GameOptions.EJPJACEEECE;
-            else if (Lighter.lighter != null && Lighter.lighter.PlayerId == player.FNPNJHNKEBK &&
+            else if (player.IsImpostor) // IsImpostor
+                __result = __instance.MaxLightRadius * PlayerControl.GameOptions.ImpostorLightMod;
+            else if (Lighter.lighter != null && Lighter.lighter.PlayerId == player.PlayerId &&
                      Lighter.lighterTimer > 0f) // if player is Lighter and Lighter has his ability active
                 __result = Mathf.Lerp(__instance.MaxLightRadius * Lighter.lighterModeLightsOffVision,
                     __instance.MaxLightRadius * Lighter.lighterModeLightsOnVision, num);
             else if (Trickster.trickster != null && Trickster.lightsOutTimer > 0f)
             {
-                float lerpValue = 1f;
+                var lerpValue = 1f;
                 if (Trickster.lightsOutDuration - Trickster.lightsOutTimer < 0.5f)
                     lerpValue = Mathf.Clamp01((Trickster.lightsOutDuration - Trickster.lightsOutTimer) * 2);
                 else if (Trickster.lightsOutTimer < 0.5) lerpValue = Mathf.Clamp01(Trickster.lightsOutTimer * 2);
                 __result = Mathf.Lerp(__instance.MinLightRadius, __instance.MaxLightRadius, 1 - lerpValue) *
-                           PlayerControl.GameOptions.FAJGBBKDEHP; // Instant lights out? Maybe add a smooth transition?
+                           PlayerControl.GameOptions.CrewLightMod; // Instant lights out? Maybe add a smooth transition?
             }
             else
                 __result = Mathf.Lerp(__instance.MinLightRadius, __instance.MaxLightRadius, num) *
-                           PlayerControl.GameOptions.FAJGBBKDEHP;
+                           PlayerControl.GameOptions.CrewLightMod;
 
             return false;
         }

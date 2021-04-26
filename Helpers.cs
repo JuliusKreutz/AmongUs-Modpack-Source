@@ -1,12 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Reflection;
 using UnhollowerBaseLib;
 using UnityEngine;
 using System.Linq;
-using Hazel;
-using TaskTypes = DMOAGPGAFKM;
+using static Modpack.Modpack;
 
 namespace Modpack
 {
@@ -17,14 +15,8 @@ namespace Modpack
             try
             {
                 var pivot = hat ? new Vector2(0.5f, 0.8f) : new Vector2(0.5f, 0.5f);
-                Texture2D texture = new Texture2D(2, 2, TextureFormat.ARGB32, true);
-                Assembly assembly = Assembly.GetExecutingAssembly();
-                Stream stream = assembly.GetManifestResourceStream(path);
-                var byteTexture = new byte[stream.Length];
-                var read = stream.Read(byteTexture, 0, (int) stream.Length);
-                LoadImage(texture, byteTexture, false);
-                return Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), pivot,
-                    pixelsPerUnit);
+                var texture = loadTextureFromResources(path);
+                return Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), pivot, pixelsPerUnit);
             }
             catch
             {
@@ -34,23 +26,42 @@ namespace Modpack
             return null;
         }
 
+        public static Texture2D loadTextureFromResources(string path)
+        {
+            try
+            {
+                var texture = new Texture2D(2, 2, TextureFormat.ARGB32, true);
+                var assembly = Assembly.GetExecutingAssembly();
+                var stream = assembly.GetManifestResourceStream(path);
+                if (stream == null) return texture;
+                var byteTexture = new byte[stream.Length];
+                stream.Read(byteTexture, 0, (int) stream.Length);
+                LoadImage(texture, byteTexture, false);
+
+                return texture;
+            }
+            catch
+            {
+                System.Console.WriteLine("Error loading texture from resources: " + path);
+            }
+
+            return null;
+        }
+
         internal delegate bool d_LoadImage(IntPtr tex, IntPtr data, bool markNonReadable);
 
         internal static d_LoadImage iCall_LoadImage;
 
-        private static bool LoadImage(Texture2D tex, byte[] data, bool markNonReadable)
+        private static void LoadImage(Il2CppObjectBase tex, byte[] data, bool markNonReadable)
         {
-            if (iCall_LoadImage == null)
-                iCall_LoadImage = IL2CPP.ResolveICall<d_LoadImage>("UnityEngine.ImageConversion::LoadImage");
-
+            iCall_LoadImage ??= IL2CPP.ResolveICall<d_LoadImage>("UnityEngine.ImageConversion::LoadImage");
             var il2cppArray = (Il2CppStructArray<byte>) data;
-
-            return iCall_LoadImage.Invoke(tex.Pointer, il2cppArray.Pointer, markNonReadable);
+            iCall_LoadImage.Invoke(tex.Pointer, il2cppArray.Pointer, markNonReadable);
         }
 
         public static PlayerControl playerById(byte id)
         {
-            foreach (PlayerControl player in PlayerControl.AllPlayerControls)
+            foreach (var player in PlayerControl.AllPlayerControls)
                 if (player.PlayerId == id)
                     return player;
             return null;
@@ -58,21 +69,21 @@ namespace Modpack
 
         public static Dictionary<byte, PlayerControl> allPlayersById()
         {
-            Dictionary<byte, PlayerControl> res = new Dictionary<byte, PlayerControl>();
-            foreach (PlayerControl player in PlayerControl.AllPlayerControls)
+            var res = new Dictionary<byte, PlayerControl>();
+            foreach (var player in PlayerControl.AllPlayerControls)
                 res.Add(player.PlayerId, player);
             return res;
         }
 
-        public static void setSkinWithAnim(PlayerPhysics playerPhysics, uint CGNMKICGLOG)
+        public static void setSkinWithAnim(PlayerPhysics playerPhysics, uint SkinId)
         {
-            SkinData nextSkin = DestroyableSingleton<HatManager>.CHNDKKBEIDG.AllSkins[(int) CGNMKICGLOG];
-            AnimationClip clip = null;
+            SkinData nextSkin = DestroyableSingleton<HatManager>.Instance.AllSkins[(int) SkinId];
+            AnimationClip clip;
             var spriteAnim = playerPhysics.Skin.animator;
             var anim = spriteAnim.m_animator;
             var skinLayer = playerPhysics.Skin;
 
-            var currentPhysicsAnim = playerPhysics.NIKGMJIKBMP.GetCurrentAnimation();
+            var currentPhysicsAnim = playerPhysics.Animator.GetCurrentAnimation();
             if (currentPhysicsAnim == playerPhysics.RunAnim) clip = nextSkin.RunAnim;
             else if (currentPhysicsAnim == playerPhysics.SpawnAnim) clip = nextSkin.SpawnAnim;
             else if (currentPhysicsAnim == playerPhysics.EnterVentAnim) clip = nextSkin.EnterVentAnim;
@@ -80,7 +91,7 @@ namespace Modpack
             else if (currentPhysicsAnim == playerPhysics.IdleAnim) clip = nextSkin.IdleAnim;
             else clip = nextSkin.IdleAnim;
 
-            float progress = playerPhysics.NIKGMJIKBMP.m_animator.GetCurrentAnimatorStateInfo(0).normalizedTime;
+            var progress = playerPhysics.Animator.m_animator.GetCurrentAnimatorStateInfo(0).normalizedTime;
             skinLayer.skin = nextSkin;
 
             spriteAnim.Play(clip, 1f);
@@ -93,7 +104,7 @@ namespace Modpack
             // Block impostor shielded kill
             if (Medic.shielded != null && Medic.shielded == target)
             {
-                MessageWriter writer = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId,
+                var writer = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId,
                     (byte) CustomRPC.ShieldedMurderAttempt, Hazel.SendOption.Reliable, -1);
                 AmongUsClient.Instance.FinishRpcImmediately(writer);
                 RPCProcedure.shieldedMurderAttempt();
@@ -101,75 +112,48 @@ namespace Modpack
                 return false;
             }
             // Block impostor not fully grown child kill
-            else if (Child.child != null && target == Child.child && !Child.isGrownUp())
+            else
             {
+                if (Child.child != null && target == Child.child && !Child.isGrownUp())
+                {
+                    return false;
+                }
+                // Block Time Master with time shield kill
+
+                if (!TimeMaster.shieldActive || TimeMaster.timeMaster == null || TimeMaster.timeMaster != target)
+                    return true;
+                if (isMeetingStart) return false;
+                // Only rewind the attempt was not called because a meeting startet 
+                var writer = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId,
+                    (byte) CustomRPC.TimeMasterRewindTime, Hazel.SendOption.Reliable, -1);
+                AmongUsClient.Instance.FinishRpcImmediately(writer);
+                RPCProcedure.timeMasterRewindTime();
+
                 return false;
             }
-            // Block Time Master with time shield kill
-            else if (TimeMaster.shieldActive && TimeMaster.timeMaster != null && TimeMaster.timeMaster == target)
-            {
-                if (!isMeetingStart)
-                {
-                    // Only rewind the attempt was not called because a meeting startet 
-                    MessageWriter writer = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId,
-                        (byte) CustomRPC.TimeMasterRewindTime, Hazel.SendOption.Reliable, -1);
-                    AmongUsClient.Instance.FinishRpcImmediately(writer);
-                    RPCProcedure.timeMasterRewindTime();
-                }
-
-                return false;
-            }
-
-            return true;
         }
 
-        public static void removeTasksFromPlayer(PlayerControl player)
-        {
-            if (player == null) return;
-            var toRemove = new List<PlayerTask>();
-            foreach (PlayerTask task in player.myTasks)
-            {
-                if (task.gameObject.GetComponent<ImportantTextTask>() != null)
-                    continue;
-                if (task.TaskType != TaskTypes.FixComms &&
-                    task.TaskType != TaskTypes.FixLights &&
-                    task.TaskType != TaskTypes.ResetReactor &&
-                    task.TaskType != TaskTypes.ResetSeismic &&
-                    task.TaskType != TaskTypes.RestoreOxy &&
-                    task.TaskType != TaskTypes.StopCharles)
-                {
-                    toRemove.Add(task);
-                }
-            }
-
-            foreach (PlayerTask task in toRemove)
-            {
-                player.RemoveTask(task);
-            }
-        }
 
         public static void refreshRoleDescription(PlayerControl player)
         {
             if (player == null) return;
 
-            List<RoleInfo> infos = RoleInfo.getRoleInfoForPlayer(player);
+            var infos = RoleInfo.getRoleInfoForPlayer(player);
 
             var toRemove = new List<PlayerTask>();
-            foreach (PlayerTask t in player.myTasks)
+            foreach (var t in player.myTasks)
             {
                 var textTask = t.gameObject.GetComponent<ImportantTextTask>();
-                if (textTask != null)
-                {
-                    var info = infos.FirstOrDefault(x => textTask.Text.StartsWith(x.name));
-                    if (info != null)
-                        infos.Remove(
-                            info); // TextTask for this RoleInfo does not have to be added, as it already exists
-                    else
-                        toRemove.Add(t); // TextTask does not have a corresponding RoleInfo and will hence be deleted
-                }
+                if (textTask == null) continue;
+                var info = infos.FirstOrDefault(x => textTask.Text.StartsWith(x.name));
+                if (info != null)
+                    infos.Remove(
+                        info); // TextTask for this RoleInfo does not have to be added, as it already exists
+                else
+                    toRemove.Add(t); // TextTask does not have a corresponding RoleInfo and will hence be deleted
             }
 
-            foreach (PlayerTask t in toRemove)
+            foreach (var t in toRemove)
             {
                 t.OnRemove();
                 player.myTasks.Remove(t);
@@ -177,7 +161,7 @@ namespace Modpack
             }
 
             // Add TextTask for remaining RoleInfos
-            foreach (RoleInfo roleInfo in infos)
+            foreach (var roleInfo in infos)
             {
                 var task = new GameObject("RoleTask").AddComponent<ImportantTextTask>();
                 task.transform.SetParent(player.transform, false);
@@ -196,24 +180,38 @@ namespace Modpack
             }
         }
 
-        private static List<int> lighterColors = new List<int>() {3, 4, 5, 7, 10, 11};
-
         public static bool isLighterColor(int colorId)
         {
-            return lighterColors.Contains(colorId);
+            return CustomColors.lighterColors.Contains(colorId);
         }
 
         public static bool isCustomServer()
         {
-            if (DestroyableSingleton<ServerManager>.CHNDKKBEIDG == null) return false;
-            StringNames n = DestroyableSingleton<ServerManager>.CHNDKKBEIDG.HMIJGFFKBNN.TranslateName;
+            if (DestroyableSingleton<ServerManager>.Instance == null) return false;
+            var n = DestroyableSingleton<ServerManager>.Instance.CurrentRegion.TranslateName;
             return n != StringNames.ServerNA && n != StringNames.ServerEU && n != StringNames.ServerAS;
+        }
+
+        public static bool hasFakeTasks(this PlayerControl player)
+        {
+            return (player == Jester.jester || player == Jackal.jackal || player == Sidekick.sidekick);
+        }
+
+        public static void clearAllTasks(this PlayerControl player)
+        {
+            for (var i = 0; i < player.myTasks.Count; i++)
+            {
+                PlayerTask playerTask = player.myTasks[i];
+                playerTask.OnRemove();
+                UnityEngine.Object.Destroy(playerTask.gameObject);
+            }
+
+            player.myTasks.Clear();
         }
 
         public static string cs(Color c, string s)
         {
-            return string.Format("<color=#{0:X2}{1:X2}{2:X2}{3:X2}>{4}</color>", ToByte(c.r), ToByte(c.g), ToByte(c.b),
-                ToByte(c.a), s);
+            return $"<color=#{ToByte(c.r):X2}{ToByte(c.g):X2}{ToByte(c.b):X2}{ToByte(c.a):X2}>{s}</color>";
         }
 
         private static byte ToByte(float f)

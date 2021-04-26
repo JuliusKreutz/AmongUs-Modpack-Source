@@ -8,15 +8,10 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using System;
-using Palette = BLMBFIODBKL;
-using DeathReason = EGHDCAKGMKI;
-using SwitchSystem = ABIMJJMBJJM;
-using SystemTypes = BCPJLGGNHBC;
-using Effects = AEOEPNHOJDP;
 
 namespace Modpack
 {
-    enum RoleId
+    internal enum RoleId
     {
         Jester,
         Mayor,
@@ -45,10 +40,12 @@ namespace Modpack
         Sidekick,
         Eraser,
         Spy,
-        Trickster
+        Trickster,
+        Cleaner,
+        Warlock
     }
 
-    enum CustomRPC
+    internal enum CustomRPC
     {
         // Main Controls
 
@@ -65,7 +62,7 @@ namespace Modpack
 
         EngineerFixLights = 81,
         EngineerUsedRepair,
-        JanitorClean,
+        CleanBody,
         SheriffKill,
         MedicSetShielded,
         ShieldedMurderAttempt,
@@ -88,7 +85,8 @@ namespace Modpack
         SetFutureErased,
         SetFutureShifted,
         PlaceJackInTheBox,
-        LightsOut
+        LightsOut,
+        WarlockCurseKill
     }
 
     public static class RPCProcedure
@@ -107,26 +105,24 @@ namespace Modpack
 
         public static void shareOptionSelection(uint id, uint selection)
         {
-            CustomOption option = CustomOption.options.FirstOrDefault(option => option.id == (int) id);
-            option.updateSelection((int) selection);
+            var option = CustomOption.options.FirstOrDefault(customOption => customOption.id == (int) id);
+            option?.updateSelection((int) selection);
         }
 
         public static void forceEnd()
         {
-            foreach (PlayerControl player in PlayerControl.AllPlayerControls)
+            foreach (var player in PlayerControl.AllPlayerControls)
             {
-                if (!player.PPMOEEPBHJO.FDNMBJOAPFL)
-                {
-                    player.RemoveInfected();
-                    player.MurderPlayer(player);
-                    player.PPMOEEPBHJO.IAGJEKLJCCI = true;
-                }
+                if (player.Data.IsImpostor) continue;
+                player.RemoveInfected();
+                player.MurderPlayer(player);
+                player.Data.IsDead = true;
             }
         }
 
         public static void setRole(byte roleId, byte playerId)
         {
-            foreach (PlayerControl player in PlayerControl.AllPlayerControls)
+            foreach (var player in PlayerControl.AllPlayerControls)
                 if (player.PlayerId == playerId)
                 {
                     switch ((RoleId) roleId)
@@ -215,6 +211,12 @@ namespace Modpack
                         case RoleId.Trickster:
                             Trickster.trickster = player;
                             break;
+                        case RoleId.Cleaner:
+                            Cleaner.cleaner = player;
+                            break;
+                        case RoleId.Warlock:
+                            Warlock.warlock = player;
+                            break;
                     }
                 }
         }
@@ -232,22 +234,24 @@ namespace Modpack
 
         public static void useUncheckedVent(int ventId, byte playerId, byte isEnter)
         {
-            PlayerControl player = Helpers.playerById(playerId);
+            var player = Helpers.playerById(playerId);
             if (player == null) return;
             // Fill dummy MessageReader and call MyPhysics.HandleRpc as the corountines cannot be accessed
-            MessageReader reader = new MessageReader();
-            byte[] bytes = BitConverter.GetBytes(ventId);
+            var reader = new MessageReader();
+            var bytes = BitConverter.GetBytes(ventId);
             if (!BitConverter.IsLittleEndian)
                 Array.Reverse(bytes);
             reader.Buffer = bytes;
             reader.Length = bytes.Length;
+
+            JackInTheBox.startAnimation(ventId);
             player.MyPhysics.HandleRpc(isEnter != 0 ? (byte) 19 : (byte) 20, reader);
         }
 
         public static void uncheckedMurderPlayer(byte sourceId, byte targetId)
         {
-            PlayerControl source = Helpers.playerById(sourceId);
-            PlayerControl target = Helpers.playerById(targetId);
+            var source = Helpers.playerById(sourceId);
+            var target = Helpers.playerById(targetId);
             if (source != null && target != null) source.MurderPlayer(target);
         }
 
@@ -255,8 +259,8 @@ namespace Modpack
 
         public static void engineerFixLights()
         {
-            SwitchSystem switchSystem = ShipStatus.Instance.Systems[SystemTypes.Electrical].Cast<SwitchSystem>();
-            switchSystem.BBCFBNPEPIE = switchSystem.FLDLDHLDCLM;
+            var switchSystem = ShipStatus.Instance.Systems[SystemTypes.Electrical].Cast<SwitchSystem>();
+            switchSystem.ActualSwitches = switchSystem.ExpectedSwitches;
         }
 
         public static void engineerUsedRepair()
@@ -264,25 +268,23 @@ namespace Modpack
             Engineer.usedRepair = true;
         }
 
-        public static void janitorClean(byte playerId)
+        public static void cleanBody(byte playerId)
         {
             DeadBody[] array = UnityEngine.Object.FindObjectsOfType<DeadBody>();
-            for (int i = 0; i < array.Length; i++)
+            foreach (var t in array)
             {
-                if (GameData.Instance.GetPlayerById(array[i].ParentId).FNPNJHNKEBK == playerId)
-                    UnityEngine.Object.Destroy(array[i].gameObject);
+                if (GameData.Instance.GetPlayerById(t.ParentId).PlayerId == playerId)
+                    UnityEngine.Object.Destroy(t.gameObject);
             }
         }
 
         public static void sheriffKill(byte targetId)
         {
-            foreach (PlayerControl player in PlayerControl.AllPlayerControls)
+            foreach (var player in PlayerControl.AllPlayerControls)
             {
-                if (player.PlayerId == targetId)
-                {
-                    Sheriff.sheriff.MurderPlayer(player);
-                    return;
-                }
+                if (player.PlayerId != targetId) continue;
+                Sheriff.sheriff.MurderPlayer(player);
+                return;
             }
         }
 
@@ -294,37 +296,15 @@ namespace Modpack
                 resetTimeMasterButton();
             }
 
-            HudManager.CHNDKKBEIDG.FullScreen.color = new Color(0f, 0.5f, 0.8f, 0.3f);
-            HudManager.CHNDKKBEIDG.FullScreen.enabled = true;
-            HudManager.CHNDKKBEIDG.StartCoroutine(Effects.DCHLMIDMBHG(TimeMaster.rewindTime / 2, new Action<float>(
-                (p) =>
-                {
-                    if (p == 1f) HudManager.CHNDKKBEIDG.FullScreen.enabled = false;
-                })));
-
-            if (TimeMaster.timeMaster == null) return;
-
-            PlayerControl lp = PlayerControl.LocalPlayer;
-            if (lp?.PPMOEEPBHJO != null && !lp.PPMOEEPBHJO.IAGJEKLJCCI && lp.inVent)
+            HudManager.Instance.FullScreen.color = new Color(0f, 0.5f, 0.8f, 0.3f);
+            HudManager.Instance.FullScreen.enabled = true;
+            HudManager.Instance.StartCoroutine(Effects.Lerp(TimeMaster.rewindTime / 2, new Action<float>((p) =>
             {
-                if ((float) (DateTime.UtcNow - localVentEnterTimePoint).TotalMilliseconds <
-                    1000 * TimeMaster.rewindTime)
-                {
-                    foreach (Vent vent in ShipStatus.Instance.GJHKPDGJHJN)
-                    {
-                        bool canUse;
-                        bool couldUse;
-                        vent.CanUse(PlayerControl.LocalPlayer.PPMOEEPBHJO, out canUse, out couldUse);
-                        if (canUse)
-                        {
-                            PlayerControl.LocalPlayer.MyPhysics.RpcExitVent(vent.Id);
-                            vent.SetButtons(false);
-                        }
-                    }
-                }
-            }
+                if (p == 1f) HudManager.Instance.FullScreen.enabled = false;
+            })));
 
-            if (PlayerControl.LocalPlayer == TimeMaster.timeMaster) return; // Time Master himself does not rewind
+            if (TimeMaster.timeMaster == null || PlayerControl.LocalPlayer == TimeMaster.timeMaster)
+                return; // Time Master himself does not rewind
 
             TimeMaster.isRewinding = true;
 
@@ -338,58 +318,55 @@ namespace Modpack
         public static void timeMasterShield()
         {
             TimeMaster.shieldActive = true;
-            HudManager.CHNDKKBEIDG.StartCoroutine(Effects.DCHLMIDMBHG(TimeMaster.shieldDuration, new Action<float>(
-                (p) =>
-                {
-                    if (p == 1f) TimeMaster.shieldActive = false;
-                })));
+            HudManager.Instance.StartCoroutine(Effects.Lerp(TimeMaster.shieldDuration, new Action<float>((p) =>
+            {
+                if (p == 1f) TimeMaster.shieldActive = false;
+            })));
         }
 
         public static void medicSetShielded(byte shieldedId)
         {
             Medic.usedShield = true;
-            foreach (PlayerControl player in PlayerControl.AllPlayerControls)
+            foreach (var player in PlayerControl.AllPlayerControls)
                 if (player.PlayerId == shieldedId)
                     Medic.shielded = player;
         }
 
         public static void shieldedMurderAttempt()
         {
-            if (Medic.shielded != null && Medic.shielded == PlayerControl.LocalPlayer && Medic.showAttemptToShielded &&
-                HudManager.CHNDKKBEIDG?.FullScreen != null)
+            if (Medic.shielded == null || Medic.shielded != PlayerControl.LocalPlayer || !Medic.showAttemptToShielded ||
+                HudManager.Instance?.FullScreen == null) return;
+            HudManager.Instance.FullScreen.enabled = true;
+            HudManager.Instance.StartCoroutine(Effects.Lerp(0.5f, new Action<float>((p) =>
             {
-                HudManager.CHNDKKBEIDG.FullScreen.enabled = true;
-                HudManager.CHNDKKBEIDG.StartCoroutine(Effects.DCHLMIDMBHG(0.5f, new Action<float>((p) =>
+                var renderer = HudManager.Instance.FullScreen;
+                var c = Palette.ImpostorRed;
+                if (p < 0.5)
                 {
-                    var renderer = HudManager.CHNDKKBEIDG.FullScreen;
-                    Color c = Palette.JPCHLLEJNEH;
-                    if (p < 0.5)
-                    {
-                        if (renderer != null)
-                            renderer.color = new Color(c.r, c.g, c.b, Mathf.Clamp01(p * 2 * 0.75f));
-                    }
-                    else
-                    {
-                        if (renderer != null)
-                            renderer.color = new Color(c.r, c.g, c.b, Mathf.Clamp01((1 - p) * 2 * 0.75f));
-                    }
+                    if (renderer != null)
+                        renderer.color = new Color(c.r, c.g, c.b, Mathf.Clamp01(p * 2 * 0.75f));
+                }
+                else
+                {
+                    if (renderer != null)
+                        renderer.color = new Color(c.r, c.g, c.b, Mathf.Clamp01((1 - p) * 2 * 0.75f));
+                }
 
-                    if (p == 1f && renderer != null) renderer.enabled = false;
-                })));
-            }
+                if (p == 1f && renderer != null) renderer.enabled = false;
+            })));
         }
 
         public static void shifterShift(byte targetId)
         {
-            PlayerControl oldShifter = Shifter.shifter;
-            PlayerControl player = Helpers.playerById(targetId);
+            var oldShifter = Shifter.shifter;
+            var player = Helpers.playerById(targetId);
             if (player == null || oldShifter == null) return;
 
             Shifter.futureShift = null;
             Shifter.clearAndReload();
 
             // Suicide (exile) when impostor or impostor variants
-            if (player.PPMOEEPBHJO.FDNMBJOAPFL || player == Jackal.jackal || player == Sidekick.sidekick)
+            if (player.Data.IsImpostor || player == Jackal.jackal || player == Sidekick.sidekick)
             {
                 oldShifter.Exiled();
                 return;
@@ -398,12 +375,10 @@ namespace Modpack
             // Switch shield
             if (Medic.shielded != null && Medic.shielded == player)
             {
-                Medic.shielded.KJAENOGGEOK.material.SetFloat("_Outline", 0f);
                 Medic.shielded = oldShifter;
             }
             else if (Medic.shielded != null && Medic.shielded == oldShifter)
             {
-                Medic.shielded.KJAENOGGEOK.material.SetFloat("_Outline", 0f);
                 Medic.shielded = player;
             }
 
@@ -476,10 +451,6 @@ namespace Modpack
             {
                 Spy.spy = oldShifter;
             }
-            else
-            {
-                // Crewmate
-            }
 
             // Set cooldowns to max for both players
             if (PlayerControl.LocalPlayer == oldShifter || PlayerControl.LocalPlayer == player)
@@ -488,19 +459,17 @@ namespace Modpack
 
         public static void swapperSwap(byte playerId1, byte playerId2)
         {
-            if (MeetingHud.Instance)
-            {
-                Swapper.playerId1 = playerId1;
-                Swapper.playerId2 = playerId2;
-            }
+            if (!MeetingHud.Instance) return;
+            Swapper.playerId1 = playerId1;
+            Swapper.playerId2 = playerId2;
         }
 
         public static void morphlingMorph(byte playerId)
         {
-            PlayerControl target = Helpers.playerById(playerId);
+            var target = Helpers.playerById(playerId);
             if (Morphling.morphling == null || target == null) return;
 
-            Morphling.morphTimer = 10f;
+            Morphling.morphTimer = Morphling.duration;
             Morphling.morphTarget = target;
         }
 
@@ -508,18 +477,16 @@ namespace Modpack
         {
             if (Camouflager.camouflager == null) return;
 
-            Camouflager.camouflageTimer = 10f;
+            Camouflager.camouflageTimer = Camouflager.duration;
         }
 
         public static void loverSuicide(byte remainingLoverId)
         {
-            if (Lovers.lover1 != null && !Lovers.lover1.PPMOEEPBHJO.IAGJEKLJCCI &&
-                Lovers.lover1.PlayerId == remainingLoverId)
+            if (Lovers.lover1 != null && !Lovers.lover1.Data.IsDead && Lovers.lover1.PlayerId == remainingLoverId)
             {
                 Lovers.lover1.MurderPlayer(Lovers.lover1);
             }
-            else if (Lovers.lover2 != null && !Lovers.lover2.PPMOEEPBHJO.IAGJEKLJCCI &&
-                     Lovers.lover2.PlayerId == remainingLoverId)
+            else if (Lovers.lover2 != null && !Lovers.lover2.Data.IsDead && Lovers.lover2.PlayerId == remainingLoverId)
             {
                 Lovers.lover2.MurderPlayer(Lovers.lover2);
             }
@@ -534,9 +501,9 @@ namespace Modpack
             }
 
             if (Vampire.vampire == null) return;
-            foreach (PlayerControl player in PlayerControl.AllPlayerControls)
+            foreach (var player in PlayerControl.AllPlayerControls)
             {
-                if (player.PlayerId == targetId && !player.PPMOEEPBHJO.IAGJEKLJCCI)
+                if (player.PlayerId == targetId && !player.Data.IsDead)
                 {
                     Vampire.bitten = player;
                 }
@@ -545,7 +512,7 @@ namespace Modpack
 
         public static void vampireTryKill()
         {
-            if (Vampire.bitten != null && !Vampire.bitten.PPMOEEPBHJO.IAGJEKLJCCI)
+            if (Vampire.bitten != null && !Vampire.bitten.Data.IsDead)
             {
                 Vampire.vampire.MurderPlayer(Vampire.bitten);
             }
@@ -555,7 +522,7 @@ namespace Modpack
 
         public static void placeGarlic(byte[] buff)
         {
-            Vector3 position = Vector3.zero;
+            var position = Vector3.zero;
             position.x = BitConverter.ToSingle(buff, 0 * sizeof(float));
             position.y = BitConverter.ToSingle(buff, 1 * sizeof(float));
             new Garlic(position);
@@ -564,54 +531,47 @@ namespace Modpack
         public static void trackerUsedTracker(byte targetId)
         {
             Tracker.usedTracker = true;
-            foreach (PlayerControl player in PlayerControl.AllPlayerControls)
+            foreach (var player in PlayerControl.AllPlayerControls)
                 if (player.PlayerId == targetId)
                     Tracker.tracked = player;
         }
 
         public static void jackalKill(byte targetId)
         {
-            foreach (PlayerControl player in PlayerControl.AllPlayerControls)
+            foreach (var player in PlayerControl.AllPlayerControls)
             {
-                if (player.PlayerId == targetId)
-                {
-                    Jackal.jackal.MurderPlayer(player);
-                    return;
-                }
+                if (player.PlayerId != targetId) continue;
+                Jackal.jackal.MurderPlayer(player);
+                return;
             }
         }
 
         public static void sidekickKill(byte targetId)
         {
-            foreach (PlayerControl player in PlayerControl.AllPlayerControls)
+            foreach (var player in PlayerControl.AllPlayerControls)
             {
-                if (player.PlayerId == targetId)
-                {
-                    Sidekick.sidekick.MurderPlayer(player);
-                    return;
-                }
+                if (player.PlayerId != targetId) continue;
+                Sidekick.sidekick.MurderPlayer(player);
+                return;
             }
         }
 
         public static void jackalCreatesSidekick(byte targetId)
         {
-            foreach (PlayerControl player in PlayerControl.AllPlayerControls)
+            foreach (var player in PlayerControl.AllPlayerControls)
             {
-                if (player.PlayerId == targetId)
+                if (player.PlayerId != targetId) continue;
+                if (!Jackal.canCreateSidekickFromImpostor && player.Data.IsImpostor)
                 {
-                    if (!Jackal.canCreateSidekickFromImpostor && player.PPMOEEPBHJO.FDNMBJOAPFL)
-                    {
-                        Jackal.fakeSidekick = player;
-                        return;
-                    }
-
-                    player.RemoveInfected();
-                    if (player != Lovers.lover1 && player != Lovers.lover2) erasePlayerRole(player.PlayerId);
-
-                    Sidekick.sidekick = player;
-                    Helpers.removeTasksFromPlayer(player);
+                    Jackal.fakeSidekick = player;
                     return;
                 }
+
+                player.RemoveInfected();
+                if (player != Lovers.lover1 && player != Lovers.lover2) erasePlayerRole(player.PlayerId);
+
+                Sidekick.sidekick = player;
+                return;
             }
         }
 
@@ -626,12 +586,11 @@ namespace Modpack
             }
 
             Sidekick.clearAndReload();
-            return;
         }
 
         public static void erasePlayerRole(byte playerId)
         {
-            PlayerControl player = Helpers.playerById(playerId);
+            var player = Helpers.playerById(playerId);
             if (player == null) return;
 
             // Crewmate roles
@@ -660,6 +619,8 @@ namespace Modpack
             if (player == Vampire.vampire) Vampire.clearAndReload();
             if (player == Eraser.eraser) Eraser.clearAndReload();
             if (player == Trickster.trickster) Trickster.clearAndReload();
+            if (player == Cleaner.cleaner) Cleaner.clearAndReload();
+            if (player == Warlock.warlock) Warlock.clearAndReload();
 
             // Other roles
             if (player == Jester.jester) Jester.clearAndReload();
@@ -672,10 +633,9 @@ namespace Modpack
             if (player == Jackal.jackal)
             {
                 // Promote Sidekick and hence override the the Jackal or erase Jackal
-                if (Sidekick.promotesToJackal && Sidekick.sidekick != null &&
-                    !Sidekick.sidekick.PPMOEEPBHJO.IAGJEKLJCCI)
+                if (Sidekick.promotesToJackal && Sidekick.sidekick != null && !Sidekick.sidekick.Data.IsDead)
                 {
-                    RPCProcedure.sidekickPromotes();
+                    sidekickPromotes();
                 }
                 else
                 {
@@ -688,8 +648,8 @@ namespace Modpack
 
         public static void setFutureErased(byte playerId)
         {
-            PlayerControl player = Helpers.playerById(playerId);
-            if (Eraser.futureErased == null) Eraser.futureErased = new List<PlayerControl>();
+            var player = Helpers.playerById(playerId);
+            Eraser.futureErased ??= new List<PlayerControl>();
             if (player != null) Eraser.futureErased.Add(player);
         }
 
@@ -700,7 +660,7 @@ namespace Modpack
 
         public static void placeJackInTheBox(byte[] buff)
         {
-            Vector3 position = Vector3.zero;
+            var position = Vector3.zero;
             position.x = BitConverter.ToSingle(buff, 0 * sizeof(float));
             position.y = BitConverter.ToSingle(buff, 1 * sizeof(float));
             new JackInTheBox(position);
@@ -710,20 +670,30 @@ namespace Modpack
         {
             Trickster.lightsOutTimer = Trickster.lightsOutDuration;
             // If the local player is impostor indicate lights out
-            if (PlayerControl.LocalPlayer.PPMOEEPBHJO.FDNMBJOAPFL)
+            if (PlayerControl.LocalPlayer.Data.IsImpostor)
             {
                 new CustomMessage("Lights are out", Trickster.lightsOutDuration);
+            }
+        }
+
+        public static void warlockCurseKill(byte targetId)
+        {
+            foreach (var player in PlayerControl.AllPlayerControls)
+            {
+                if (player.PlayerId != targetId) continue;
+                Warlock.curseKillTarget = player;
+                Warlock.warlock.MurderPlayer(player);
+                return;
             }
         }
     }
 
     [HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.HandleRpc))]
-    class RPCHandlerPatch
+    internal class RPCHandlerPatch
     {
-        static void Postfix(byte ONIABIILFGF, MessageReader JIGFBHFFNFI)
+        private static void Postfix([HarmonyArgument(0)] byte callId, [HarmonyArgument(1)] MessageReader reader)
         {
-            byte packetId = ONIABIILFGF;
-            MessageReader reader = JIGFBHFFNFI;
+            var packetId = callId;
             switch (packetId)
             {
                 // Main Controls
@@ -732,39 +702,39 @@ namespace Modpack
                     RPCProcedure.resetVariables();
                     break;
                 case (byte) CustomRPC.ShareOptionSelection:
-                    uint id = JIGFBHFFNFI.ReadPackedUInt32();
-                    uint selection = JIGFBHFFNFI.ReadPackedUInt32();
+                    var id = reader.ReadPackedUInt32();
+                    var selection = reader.ReadPackedUInt32();
                     RPCProcedure.shareOptionSelection(id, selection);
                     break;
                 case (byte) CustomRPC.ForceEnd:
                     RPCProcedure.forceEnd();
                     break;
                 case (byte) CustomRPC.SetRole:
-                    byte roleId = JIGFBHFFNFI.ReadByte();
-                    byte playerId = JIGFBHFFNFI.ReadByte();
+                    var roleId = reader.ReadByte();
+                    var playerId = reader.ReadByte();
                     RPCProcedure.setRole(roleId, playerId);
                     break;
                 case (byte) CustomRPC.SetUncheckedColor:
-                    byte c = JIGFBHFFNFI.ReadByte();
-                    byte p = JIGFBHFFNFI.ReadByte();
+                    var c = reader.ReadByte();
+                    var p = reader.ReadByte();
                     RPCProcedure.setUncheckedColor(c, p);
                     break;
                 case (byte) CustomRPC.VersionHandshake:
-                    byte major = JIGFBHFFNFI.ReadByte();
-                    byte minor = JIGFBHFFNFI.ReadByte();
-                    byte patch = JIGFBHFFNFI.ReadByte();
-                    int versionOwnerId = JIGFBHFFNFI.ReadPackedInt32();
+                    var major = reader.ReadByte();
+                    var minor = reader.ReadByte();
+                    var patch = reader.ReadByte();
+                    var versionOwnerId = reader.ReadPackedInt32();
                     RPCProcedure.versionHandshake(major, minor, patch, versionOwnerId);
                     break;
                 case (byte) CustomRPC.UseUncheckedVent:
-                    int ventId = JIGFBHFFNFI.ReadPackedInt32();
-                    byte ventingPlayer = JIGFBHFFNFI.ReadByte();
-                    byte isEnter = JIGFBHFFNFI.ReadByte();
+                    var ventId = reader.ReadPackedInt32();
+                    var ventingPlayer = reader.ReadByte();
+                    var isEnter = reader.ReadByte();
                     RPCProcedure.useUncheckedVent(ventId, ventingPlayer, isEnter);
                     break;
                 case (byte) CustomRPC.UncheckedMurderPlayer:
-                    byte source = JIGFBHFFNFI.ReadByte();
-                    byte target = JIGFBHFFNFI.ReadByte();
+                    var source = reader.ReadByte();
+                    var target = reader.ReadByte();
                     RPCProcedure.uncheckedMurderPlayer(source, target);
                     break;
 
@@ -776,11 +746,11 @@ namespace Modpack
                 case (byte) CustomRPC.EngineerUsedRepair:
                     RPCProcedure.engineerUsedRepair();
                     break;
-                case (byte) CustomRPC.JanitorClean:
-                    RPCProcedure.janitorClean(JIGFBHFFNFI.ReadByte());
+                case (byte) CustomRPC.CleanBody:
+                    RPCProcedure.cleanBody(reader.ReadByte());
                     break;
                 case (byte) CustomRPC.SheriffKill:
-                    RPCProcedure.sheriffKill(JIGFBHFFNFI.ReadByte());
+                    RPCProcedure.sheriffKill(reader.ReadByte());
                     break;
                 case (byte) CustomRPC.TimeMasterRewindTime:
                     RPCProcedure.timeMasterRewindTime();
@@ -789,68 +759,71 @@ namespace Modpack
                     RPCProcedure.timeMasterShield();
                     break;
                 case (byte) CustomRPC.MedicSetShielded:
-                    RPCProcedure.medicSetShielded(JIGFBHFFNFI.ReadByte());
+                    RPCProcedure.medicSetShielded(reader.ReadByte());
                     break;
                 case (byte) CustomRPC.ShieldedMurderAttempt:
                     RPCProcedure.shieldedMurderAttempt();
                     break;
                 case (byte) CustomRPC.ShifterShift:
-                    RPCProcedure.shifterShift(JIGFBHFFNFI.ReadByte());
+                    RPCProcedure.shifterShift(reader.ReadByte());
                     break;
                 case (byte) CustomRPC.SwapperSwap:
-                    byte playerId1 = JIGFBHFFNFI.ReadByte();
-                    byte playerId2 = JIGFBHFFNFI.ReadByte();
+                    var playerId1 = reader.ReadByte();
+                    var playerId2 = reader.ReadByte();
                     RPCProcedure.swapperSwap(playerId1, playerId2);
                     break;
                 case (byte) CustomRPC.MorphlingMorph:
-                    RPCProcedure.morphlingMorph(JIGFBHFFNFI.ReadByte());
+                    RPCProcedure.morphlingMorph(reader.ReadByte());
                     break;
                 case (byte) CustomRPC.CamouflagerCamouflage:
                     RPCProcedure.camouflagerCamouflage();
                     break;
                 case (byte) CustomRPC.LoverSuicide:
-                    RPCProcedure.loverSuicide(JIGFBHFFNFI.ReadByte());
+                    RPCProcedure.loverSuicide(reader.ReadByte());
                     break;
                 case (byte) CustomRPC.VampireSetBitten:
-                    byte bittenId = JIGFBHFFNFI.ReadByte();
-                    byte reset = JIGFBHFFNFI.ReadByte();
+                    var bittenId = reader.ReadByte();
+                    var reset = reader.ReadByte();
                     RPCProcedure.vampireSetBitten(bittenId, reset);
                     break;
                 case (byte) CustomRPC.VampireTryKill:
                     RPCProcedure.vampireTryKill();
                     break;
                 case (byte) CustomRPC.PlaceGarlic:
-                    RPCProcedure.placeGarlic(JIGFBHFFNFI.ReadBytesAndSize());
+                    RPCProcedure.placeGarlic(reader.ReadBytesAndSize());
                     break;
                 case (byte) CustomRPC.TrackerUsedTracker:
-                    RPCProcedure.trackerUsedTracker(JIGFBHFFNFI.ReadByte());
+                    RPCProcedure.trackerUsedTracker(reader.ReadByte());
                     break;
                 case (byte) CustomRPC.JackalKill:
-                    RPCProcedure.jackalKill(JIGFBHFFNFI.ReadByte());
+                    RPCProcedure.jackalKill(reader.ReadByte());
                     break;
                 case (byte) CustomRPC.SidekickKill:
-                    RPCProcedure.sidekickKill(JIGFBHFFNFI.ReadByte());
+                    RPCProcedure.sidekickKill(reader.ReadByte());
                     break;
                 case (byte) CustomRPC.JackalCreatesSidekick:
-                    RPCProcedure.jackalCreatesSidekick(JIGFBHFFNFI.ReadByte());
+                    RPCProcedure.jackalCreatesSidekick(reader.ReadByte());
                     break;
                 case (byte) CustomRPC.SidekickPromotes:
                     RPCProcedure.sidekickPromotes();
                     break;
                 case (byte) CustomRPC.ErasePlayerRole:
-                    RPCProcedure.erasePlayerRole(JIGFBHFFNFI.ReadByte());
+                    RPCProcedure.erasePlayerRole(reader.ReadByte());
                     break;
                 case (byte) CustomRPC.SetFutureErased:
-                    RPCProcedure.setFutureErased(JIGFBHFFNFI.ReadByte());
+                    RPCProcedure.setFutureErased(reader.ReadByte());
                     break;
                 case (byte) CustomRPC.SetFutureShifted:
-                    RPCProcedure.setFutureShifted(JIGFBHFFNFI.ReadByte());
+                    RPCProcedure.setFutureShifted(reader.ReadByte());
                     break;
                 case (byte) CustomRPC.PlaceJackInTheBox:
-                    RPCProcedure.placeJackInTheBox(JIGFBHFFNFI.ReadBytesAndSize());
+                    RPCProcedure.placeJackInTheBox(reader.ReadBytesAndSize());
                     break;
                 case (byte) CustomRPC.LightsOut:
                     RPCProcedure.lightsOut();
+                    break;
+                case (byte) CustomRPC.WarlockCurseKill:
+                    RPCProcedure.warlockCurseKill(reader.ReadByte());
                     break;
             }
         }

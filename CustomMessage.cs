@@ -1,44 +1,39 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System;
-using Effects = AEOEPNHOJDP;
+using TMPro;
 
 namespace Modpack
 {
     public class CustomMessage
     {
-        private TMPro.TMP_Text text;
-        private static List<CustomMessage> customMessages = new List<CustomMessage>();
+        private static readonly List<CustomMessage> customMessages = new List<CustomMessage>();
 
         public CustomMessage(string message, float duration)
         {
-            RoomTracker roomTracker = HudManager.CHNDKKBEIDG?.roomTracker;
-            if (roomTracker != null)
+            var roomTracker = HudManager.Instance?.roomTracker;
+            if (roomTracker == null) return;
+            var gameObject =
+                UnityEngine.Object.Instantiate(roomTracker.gameObject, HudManager.Instance.transform, true);
+
+            UnityEngine.Object.DestroyImmediate(gameObject.GetComponent<RoomTracker>());
+            var text = gameObject.GetComponent<TMP_Text>();
+            text.text = message;
+
+            // Use local position to place it in the player's view instead of the world location
+            gameObject.transform.localPosition = new Vector3(0, -1.8f, gameObject.transform.localPosition.z);
+            customMessages.Add(this);
+
+            HudManager.Instance.StartCoroutine(Effects.Lerp(duration, new Action<float>((p) =>
             {
-                GameObject gameObject = UnityEngine.Object.Instantiate(roomTracker.gameObject);
-
-                gameObject.transform.SetParent(HudManager.CHNDKKBEIDG.transform);
-                UnityEngine.Object.DestroyImmediate(gameObject.GetComponent<RoomTracker>());
-                text = gameObject.GetComponent<TMPro.TMP_Text>();
-                text.text = message;
-
-                // Use local position to place it in the player's view instead of the world location
-                gameObject.transform.localPosition = new Vector3(0, -1.8f, gameObject.transform.localPosition.z);
-                customMessages.Add(this);
-
-                HudManager.CHNDKKBEIDG.StartCoroutine(Effects.DCHLMIDMBHG(duration, new Action<float>((p) =>
-                {
-                    bool even = ((int) (p * duration / 0.25f)) % 2 == 0; // Bool flips every 0.25 seconds
-                    string prefix = (even ? "<color=#FCBA03FF>" : "<color=#FF0000FF>");
-                    text.text = prefix + message + "</color>";
-                    if (text != null) text.color = even ? Color.yellow : Color.red;
-                    if (p == 1f && text?.gameObject != null)
-                    {
-                        UnityEngine.Object.Destroy(text.gameObject);
-                        customMessages.Remove(this);
-                    }
-                })));
-            }
+                var even = ((int) (p * duration / 0.25f)) % 2 == 0; // Bool flips every 0.25 seconds
+                var prefix = (even ? "<color=#FCBA03FF>" : "<color=#FF0000FF>");
+                text.text = prefix + message + "</color>";
+                if (text != null) text.color = even ? Color.yellow : Color.red;
+                if (p != 1f || text == null || text.gameObject == null) return;
+                UnityEngine.Object.Destroy(text.gameObject);
+                customMessages.Remove(this);
+            })));
         }
     }
 }

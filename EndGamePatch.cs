@@ -1,20 +1,12 @@
 using HarmonyLib;
 using static Modpack.Modpack;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
-using UnhollowerBaseLib;
-using GameOverReason = AMGMAKBHCMN;
-using TempData = MFEGHOFFKKA;
-using WinningPlayerData = FDAHKHEDJPN;
-using DeathReason = EGHDCAKGMKI;
-using SystemTypes = BCPJLGGNHBC;
-using ISystemType = JBBCJFNFOBB;
-using LifeSuppSystemType = GIICFCLBGOD;
-using ICriticalSabotage = KMBJMPDCFJE;
 
 namespace Modpack
 {
-    enum CustomGameOverReason
+    internal enum CustomGameOverReason
     {
         LoversWin = 10,
         TeamJackalWin = 11,
@@ -22,7 +14,7 @@ namespace Modpack
         JesterWin = 13
     }
 
-    enum WinCondition
+    internal enum WinCondition
     {
         Default,
         LoversTeamWin,
@@ -32,11 +24,11 @@ namespace Modpack
         ChildLose
     }
 
-    static class AdditionalTempData
+    internal static class AdditionalTempData
     {
         // Should be implemented using a proper GameOverReason in the future
         public static WinCondition winCondition = WinCondition.Default;
-        public static bool localIsLover = false;
+        public static bool localIsLover;
 
 
         public static void clear()
@@ -46,18 +38,20 @@ namespace Modpack
         }
     }
 
-    [HarmonyPatch(typeof(AmongUsClient), nameof(AmongUsClient.DDIEDPFFHOG))]
+    [HarmonyPatch(typeof(AmongUsClient), nameof(AmongUsClient.OnGameEnd))]
     public class OnGameEndPatch
     {
         private static GameOverReason gameOverReason;
 
-        public static void Prefix(AmongUsClient __instance, ref GameOverReason NEPMFBMGGLF, bool FBEKDLNKNLL)
+        public static void Prefix(AmongUsClient __instance, [HarmonyArgument(0)] ref GameOverReason reason,
+            [HarmonyArgument(1)] bool showAd)
         {
-            gameOverReason = NEPMFBMGGLF;
-            if ((int) NEPMFBMGGLF >= 10) NEPMFBMGGLF = GameOverReason.ImpostorByKill;
+            gameOverReason = reason;
+            if ((int) reason >= 10) reason = GameOverReason.ImpostorByKill;
         }
 
-        public static void Postfix(AmongUsClient __instance, GameOverReason NEPMFBMGGLF, bool FBEKDLNKNLL)
+        public static void Postfix(AmongUsClient __instance, [HarmonyArgument(0)] ref GameOverReason reason,
+            [HarmonyArgument(1)] bool showAd)
         {
             AdditionalTempData.clear();
 
@@ -65,24 +59,24 @@ namespace Modpack
             if (Jester.jester != null)
             {
                 WinningPlayerData jesterWinner = null;
-                foreach (WinningPlayerData winner in TempData.BPDANAHEJDD)
-                    if (winner.NNMPJKHJLMB == Jester.jester.PPMOEEPBHJO.PCLLABJCIPC)
+                foreach (var winner in TempData.winners)
+                    if (winner.Name == Jester.jester.Data.PlayerName)
                         jesterWinner = winner;
 
-                if (jesterWinner != null) TempData.BPDANAHEJDD.Remove(jesterWinner);
+                if (jesterWinner != null) TempData.winners.Remove(jesterWinner);
             }
 
             // Remove Jackal and Sidekick from winners (on Jackal win he will be added again, see below)
             if (Jackal.jackal != null || Sidekick.sidekick != null)
             {
-                List<WinningPlayerData> winnersToRemove = new List<WinningPlayerData>();
-                foreach (WinningPlayerData winner in TempData.BPDANAHEJDD)
+                var winnersToRemove = new List<WinningPlayerData>();
+                foreach (var winner in TempData.winners)
                 {
-                    if (winner.NNMPJKHJLMB == Jackal.jackal?.PPMOEEPBHJO?.PCLLABJCIPC) winnersToRemove.Add(winner);
-                    if (winner.NNMPJKHJLMB == Sidekick.sidekick?.PPMOEEPBHJO?.PCLLABJCIPC) winnersToRemove.Add(winner);
+                    if (winner.Name == Jackal.jackal?.Data?.PlayerName) winnersToRemove.Add(winner);
+                    if (winner.Name == Sidekick.sidekick?.Data?.PlayerName) winnersToRemove.Add(winner);
                     foreach (var player in Jackal.formerJackals)
                     {
-                        if (winner.NNMPJKHJLMB == player.PPMOEEPBHJO.PCLLABJCIPC)
+                        if (winner.Name == player.Data.PlayerName)
                         {
                             winnersToRemove.Add(winner);
                         }
@@ -91,38 +85,37 @@ namespace Modpack
 
                 foreach (var winner in winnersToRemove)
                 {
-                    TempData.BPDANAHEJDD.Remove(winner);
+                    TempData.winners.Remove(winner);
                 }
             }
 
-            bool jesterWin = Jester.jester != null && gameOverReason == (GameOverReason) CustomGameOverReason.JesterWin;
-            bool childLose = Child.child != null && gameOverReason == (GameOverReason) CustomGameOverReason.ChildLose;
-            bool loversWin = Lovers.existingAndAlive() &&
-                             (gameOverReason == (GameOverReason) CustomGameOverReason.LoversWin ||
-                              (TempData.OMHNAMNPJCP(gameOverReason) &&
-                               Lovers
-                                   .existingAndCrewLovers())); // Either they win if they are among the last 3 players, or they win if they are both Crewmates and both alive and the Crew wins (Team Imp/Jackal Lovers can only win solo wins)
-            bool teamJackalWin = gameOverReason == (GameOverReason) CustomGameOverReason.TeamJackalWin &&
-                                 ((Jackal.jackal != null && !Jackal.jackal.PPMOEEPBHJO.IAGJEKLJCCI) ||
-                                  (Sidekick.sidekick != null && !Sidekick.sidekick.PPMOEEPBHJO.IAGJEKLJCCI));
+            var jesterWin = Jester.jester != null && gameOverReason == (GameOverReason) CustomGameOverReason.JesterWin;
+            var childLose = Child.child != null && gameOverReason == (GameOverReason) CustomGameOverReason.ChildLose;
+            var loversWin = Lovers.existingAndAlive() &&
+                            (gameOverReason == (GameOverReason) CustomGameOverReason.LoversWin ||
+                             (TempData.DidHumansWin(gameOverReason) &&
+                              Lovers
+                                  .existingAndCrewLovers())); // Either they win if they are among the last 3 players, or they win if they are both Crewmates and both alive and the Crew wins (Team Imp/Jackal Lovers can only win solo wins)
+            var teamJackalWin = gameOverReason == (GameOverReason) CustomGameOverReason.TeamJackalWin &&
+                                ((Jackal.jackal != null && !Jackal.jackal.Data.IsDead) ||
+                                 (Sidekick.sidekick != null && !Sidekick.sidekick.Data.IsDead));
 
             // Child lose
             if (childLose)
             {
-                TempData.BPDANAHEJDD = new Il2CppSystem.Collections.Generic.List<WinningPlayerData>();
-                WinningPlayerData wpd = new WinningPlayerData(Child.child.PPMOEEPBHJO);
-                wpd.APIPIPIKLCE =
-                    false; // If "no one is the Child", it will display the Child, but also show defeat to everyone
-                TempData.BPDANAHEJDD.Add(wpd);
+                TempData.winners = new Il2CppSystem.Collections.Generic.List<WinningPlayerData>();
+                var wpd = new WinningPlayerData(Child.child.Data) {IsYou = false};
+                // If "no one is the Child", it will display the Child, but also show defeat to everyone
+                TempData.winners.Add(wpd);
                 AdditionalTempData.winCondition = WinCondition.ChildLose;
             }
 
             // Jester win
             else if (jesterWin)
             {
-                TempData.BPDANAHEJDD = new Il2CppSystem.Collections.Generic.List<WinningPlayerData>();
-                WinningPlayerData wpd = new WinningPlayerData(Jester.jester.PPMOEEPBHJO);
-                TempData.BPDANAHEJDD.Add(wpd);
+                TempData.winners = new Il2CppSystem.Collections.Generic.List<WinningPlayerData>();
+                var wpd = new WinningPlayerData(Jester.jester.Data);
+                TempData.winners.Add(wpd);
                 AdditionalTempData.winCondition = WinCondition.JesterWin;
             }
 
@@ -135,24 +128,24 @@ namespace Modpack
                 if (Lovers.existingAndCrewLovers())
                 {
                     AdditionalTempData.winCondition = WinCondition.LoversTeamWin;
-                    TempData.BPDANAHEJDD = new Il2CppSystem.Collections.Generic.List<WinningPlayerData>();
-                    foreach (PlayerControl p in PlayerControl.AllPlayerControls)
+                    TempData.winners = new Il2CppSystem.Collections.Generic.List<WinningPlayerData>();
+                    foreach (var p in PlayerControl.AllPlayerControls)
                     {
                         if (p == null) continue;
                         if (p == Lovers.lover1 || p == Lovers.lover2)
-                            TempData.BPDANAHEJDD.Add(new WinningPlayerData(p.PPMOEEPBHJO));
+                            TempData.winners.Add(new WinningPlayerData(p.Data));
                         else if (p != Jester.jester && p != Jackal.jackal && p != Sidekick.sidekick &&
-                                 !p.PPMOEEPBHJO.FDNMBJOAPFL)
-                            TempData.BPDANAHEJDD.Add(new WinningPlayerData(p.PPMOEEPBHJO));
+                                 !p.Data.IsImpostor)
+                            TempData.winners.Add(new WinningPlayerData(p.Data));
                     }
                 }
                 // Lovers solo win
                 else
                 {
                     AdditionalTempData.winCondition = WinCondition.LoversSoloWin;
-                    TempData.BPDANAHEJDD = new Il2CppSystem.Collections.Generic.List<WinningPlayerData>();
-                    TempData.BPDANAHEJDD.Add(new WinningPlayerData(Lovers.lover1.PPMOEEPBHJO));
-                    TempData.BPDANAHEJDD.Add(new WinningPlayerData(Lovers.lover2.PPMOEEPBHJO));
+                    TempData.winners = new Il2CppSystem.Collections.Generic.List<WinningPlayerData>();
+                    TempData.winners.Add(new WinningPlayerData(Lovers.lover1.Data));
+                    TempData.winners.Add(new WinningPlayerData(Lovers.lover2.Data));
                 }
             }
 
@@ -161,23 +154,21 @@ namespace Modpack
             {
                 // Jackal wins if nobody except jackal is alive
                 AdditionalTempData.winCondition = WinCondition.JackalWin;
-                TempData.BPDANAHEJDD = new Il2CppSystem.Collections.Generic.List<WinningPlayerData>();
-                WinningPlayerData wpd = new WinningPlayerData(Jackal.jackal.PPMOEEPBHJO);
-                wpd.FDNMBJOAPFL = false;
-                TempData.BPDANAHEJDD.Add(wpd);
+                TempData.winners = new Il2CppSystem.Collections.Generic.List<WinningPlayerData>();
+                var wpd = new WinningPlayerData(Jackal.jackal.Data) {IsImpostor = false};
+                TempData.winners.Add(wpd);
                 // If there is a sidekick. The sidekick also wins
                 if (Sidekick.sidekick != null)
                 {
-                    WinningPlayerData wpdSidekick = new WinningPlayerData(Sidekick.sidekick.PPMOEEPBHJO);
-                    wpdSidekick.FDNMBJOAPFL = false;
-                    TempData.BPDANAHEJDD.Add(wpdSidekick);
+                    var wpdSidekick = new WinningPlayerData(Sidekick.sidekick.Data) {IsImpostor = false};
+                    TempData.winners.Add(wpdSidekick);
                 }
 
-                foreach (var player in Jackal.formerJackals)
+                foreach (var wpdFormerJackal in Jackal.formerJackals.Select(
+                    player => new WinningPlayerData(player.Data)))
                 {
-                    WinningPlayerData wpdFormerJackal = new WinningPlayerData(player.PPMOEEPBHJO);
-                    wpdFormerJackal.FDNMBJOAPFL = false;
-                    TempData.BPDANAHEJDD.Add(wpdFormerJackal);
+                    wpdFormerJackal.IsImpostor = false;
+                    TempData.winners.Add(wpdFormerJackal);
                 }
             }
 
@@ -186,61 +177,67 @@ namespace Modpack
         }
     }
 
-    [HarmonyPatch(typeof(EndGameManager), nameof(EndGameManager.CMELCNKGDDP))]
+    [HarmonyPatch(typeof(EndGameManager), nameof(EndGameManager.SetEverythingUp))]
     public class EndGameManagerSetUpPatch
     {
+        private static readonly int Color1 = Shader.PropertyToID("_Color");
+
         public static void Postfix(EndGameManager __instance)
         {
-            GameObject bonusText = UnityEngine.Object.Instantiate(__instance.WinText.gameObject);
-            bonusText.transform.position = new Vector3(__instance.WinText.transform.position.x,
-                __instance.WinText.transform.position.y - 0.8f, __instance.WinText.transform.position.z);
+            var bonusText = Object.Instantiate(__instance.WinText.gameObject);
+            var position = __instance.WinText.transform.position;
+            bonusText.transform.position = new Vector3(position.x,
+                position.y - 0.8f, position.z);
             bonusText.transform.localScale = new Vector3(0.7f, 0.7f, 1f);
-            TMPro.TMP_Text textRenderer = bonusText.GetComponent<TMPro.TMP_Text>();
+            var textRenderer = bonusText.GetComponent<TMPro.TMP_Text>();
             textRenderer.text = "";
 
-            if (AdditionalTempData.winCondition == WinCondition.JesterWin)
+            switch (AdditionalTempData.winCondition)
             {
-                textRenderer.text = "Jester Wins";
-                textRenderer.color = Jester.color;
-            }
-            else if (AdditionalTempData.winCondition == WinCondition.LoversTeamWin)
-            {
-                if (AdditionalTempData.localIsLover)
+                case WinCondition.JesterWin:
+                    textRenderer.text = "Jester Wins";
+                    textRenderer.color = Jester.color;
+                    break;
+                case WinCondition.LoversTeamWin:
                 {
-                    __instance.WinText.text = "Double Victory";
-                }
+                    if (AdditionalTempData.localIsLover)
+                    {
+                        __instance.WinText.text = "Double Victory";
+                    }
 
-                textRenderer.text = "Lovers And Crewmates Win";
-                textRenderer.color = Lovers.color;
-                __instance.BackgroundBar.material.SetColor("_Color", Lovers.color);
-            }
-            else if (AdditionalTempData.winCondition == WinCondition.LoversSoloWin)
-            {
-                textRenderer.text = "Lovers Win";
-                textRenderer.color = Lovers.color;
-                __instance.BackgroundBar.material.SetColor("_Color", Lovers.color);
-            }
-            else if (AdditionalTempData.winCondition == WinCondition.JackalWin)
-            {
-                textRenderer.text = "Team Jackal Wins";
-                textRenderer.color = Jackal.color;
-            }
-            else if (AdditionalTempData.winCondition == WinCondition.ChildLose)
-            {
-                textRenderer.text = "Child died";
-                textRenderer.color = Child.color;
+                    textRenderer.text = "Lovers And Crewmates Win";
+                    textRenderer.color = Lovers.color;
+                    __instance.BackgroundBar.material.SetColor(Color1, Lovers.color);
+                    break;
+                }
+                case WinCondition.LoversSoloWin:
+                    textRenderer.text = "Lovers Win";
+                    textRenderer.color = Lovers.color;
+                    __instance.BackgroundBar.material.SetColor(Color1, Lovers.color);
+                    break;
+                case WinCondition.JackalWin:
+                    textRenderer.text = "Team Jackal Wins";
+                    textRenderer.color = Jackal.color;
+                    break;
+                case WinCondition.ChildLose:
+                    textRenderer.text = "Child died";
+                    textRenderer.color = Child.color;
+                    break;
             }
 
             AdditionalTempData.clear();
         }
     }
 
-    [HarmonyPatch(typeof(ShipStatus), nameof(ShipStatus.KMPKPPGPNIH))]
-    class CheckEndCriteriaPatch
+    [HarmonyPatch(typeof(ShipStatus), nameof(ShipStatus.CheckEndCriteria))]
+    internal class CheckEndCriteriaPatch
     {
         public static bool Prefix(ShipStatus __instance)
         {
             if (!GameData.Instance) return false;
+            if (DestroyableSingleton<TutorialManager>
+                .InstanceExists) // InstanceExists | Don't check Custom Criteria when in Tutorial
+                return true;
             var statistics = new PlayerStatistics(__instance);
             if (CheckAndEndGameForChildLose(__instance)) return false;
             if (CheckAndEndGameForJesterWin(__instance)) return false;
@@ -249,242 +246,107 @@ namespace Modpack
             if (CheckAndEndGameForLoverWin(__instance, statistics)) return false;
             if (CheckAndEndGameForJackalWin(__instance, statistics)) return false;
             if (CheckAndEndGameForImpostorWin(__instance, statistics)) return false;
-            if (CheckAndEndGameForCrewmateWin(__instance, statistics)) return false;
-            return false;
+            return CheckAndEndGameForCrewmateWin(__instance, statistics) && false;
         }
 
-        private static bool CheckAndEndGameForChildLose(ShipStatus __instance)
+        private static bool CheckAndEndGameForChildLose(Behaviour __instance)
         {
-            if (Child.triggerChildLose)
-            {
-                if (!DestroyableSingleton<TutorialManager>.BMHJGNNOGDM)
-                {
-                    __instance.enabled = false;
-                    ShipStatus.EABBNOODFGL((GameOverReason) CustomGameOverReason.ChildLose, false);
-                }
-
-                DestroyableSingleton<HudManager>.CHNDKKBEIDG.ShowPopUp(
-                    DestroyableSingleton<TranslationController>.CHNDKKBEIDG.GetString(StringNames.GameOverImpostorDead,
-                        new Il2CppReferenceArray<Il2CppSystem.Object>(0)));
-                ReviveEveryone();
-                return true;
-            }
-
-            return false;
+            if (!Child.triggerChildLose) return false;
+            __instance.enabled = false;
+            ShipStatus.RpcEndGame((GameOverReason) CustomGameOverReason.ChildLose, false);
+            return true;
         }
 
-        private static bool CheckAndEndGameForJesterWin(ShipStatus __instance)
+        private static bool CheckAndEndGameForJesterWin(Behaviour __instance)
         {
-            if (Jester.triggerJesterWin)
-            {
-                if (!DestroyableSingleton<TutorialManager>.BMHJGNNOGDM)
-                {
-                    __instance.enabled = false;
-                    ShipStatus.EABBNOODFGL((GameOverReason) CustomGameOverReason.JesterWin, false);
-                }
-
-                DestroyableSingleton<HudManager>.CHNDKKBEIDG.ShowPopUp(
-                    DestroyableSingleton<TranslationController>.CHNDKKBEIDG.GetString(StringNames.GameOverImpostorDead,
-                        new Il2CppReferenceArray<Il2CppSystem.Object>(0)));
-                ReviveEveryone();
-                return true;
-            }
-
-            return false;
+            if (!Jester.triggerJesterWin) return false;
+            __instance.enabled = false;
+            ShipStatus.RpcEndGame((GameOverReason) CustomGameOverReason.JesterWin, false);
+            return true;
         }
 
         private static bool CheckAndEndGameForSabotageWin(ShipStatus __instance)
         {
             if (__instance.Systems == null) return false;
-            ISystemType systemType = __instance.Systems.ContainsKey(SystemTypes.LifeSupp)
+            var systemType = __instance.Systems.ContainsKey(SystemTypes.LifeSupp)
                 ? __instance.Systems[SystemTypes.LifeSupp]
                 : null;
-            if (systemType != null)
+            var lifeSuppSystemType = systemType?.TryCast<LifeSuppSystemType>();
+            if (lifeSuppSystemType != null && lifeSuppSystemType.Countdown < 0f)
             {
-                LifeSuppSystemType lifeSuppSystemType = systemType.TryCast<LifeSuppSystemType>();
-                if (lifeSuppSystemType != null && lifeSuppSystemType.GPBBPGOINOF < 0f)
-                {
-                    EndGameForSabotage(__instance);
-                    lifeSuppSystemType.GPBBPGOINOF = 10000f;
-                    return true;
-                }
+                EndGameForSabotage(__instance);
+                lifeSuppSystemType.Countdown = 10000f;
+                return true;
             }
 
-            ISystemType systemType2 = __instance.Systems.ContainsKey(SystemTypes.Reactor)
+            var systemType2 = (__instance.Systems.ContainsKey(SystemTypes.Reactor)
                 ? __instance.Systems[SystemTypes.Reactor]
-                : null;
-            if (systemType2 == null)
-            {
-                systemType2 = __instance.Systems.ContainsKey(SystemTypes.Laboratory)
-                    ? __instance.Systems[SystemTypes.Laboratory]
-                    : null;
-            }
+                : null) ?? (__instance.Systems.ContainsKey(SystemTypes.Laboratory)
+                ? __instance.Systems[SystemTypes.Laboratory]
+                : null);
 
-            if (systemType2 != null)
-            {
-                ICriticalSabotage criticalSystem = systemType2.TryCast<ICriticalSabotage>();
-                if (criticalSystem != null && criticalSystem.GPBBPGOINOF < 0f)
-                {
-                    EndGameForSabotage(__instance);
-                    criticalSystem.ClearSabotage();
-                    return true;
-                }
-            }
-
-            return false;
+            var criticalSystem = systemType2?.TryCast<ICriticalSabotage>();
+            if (criticalSystem == null || !(criticalSystem.Countdown < 0f)) return false;
+            EndGameForSabotage(__instance);
+            criticalSystem.ClearSabotage();
+            return true;
         }
 
         private static bool CheckAndEndGameForTaskWin(ShipStatus __instance)
         {
-            bool localCompletedAllTasks = true;
-            foreach (PlayerTask t in PlayerControl.LocalPlayer.myTasks)
-            {
-                localCompletedAllTasks = localCompletedAllTasks && t.FDIIBNGHCAK;
-            }
-
-            if (!DestroyableSingleton<TutorialManager>.BMHJGNNOGDM)
-            {
-                if (GameData.Instance.TotalTasks <= GameData.Instance.CompletedTasks)
-                {
-                    __instance.enabled = false;
-                    ShipStatus.EABBNOODFGL(GameOverReason.HumansByTask, false);
-                    return true;
-                }
-            }
-            else if (localCompletedAllTasks)
-            {
-                DestroyableSingleton<HudManager>.CHNDKKBEIDG.ShowPopUp(
-                    DestroyableSingleton<TranslationController>.CHNDKKBEIDG.GetString(StringNames.GameOverTaskWin,
-                        new Il2CppReferenceArray<Il2CppSystem.Object>(0)));
-                __instance.Begin();
-            }
-
-            return false;
+            if (GameData.Instance.TotalTasks > GameData.Instance.CompletedTasks) return false;
+            __instance.enabled = false;
+            ShipStatus.RpcEndGame(GameOverReason.HumansByTask, false);
+            return true;
         }
 
         private static bool CheckAndEndGameForLoverWin(ShipStatus __instance, PlayerStatistics statistics)
         {
-            if (statistics.TeamLoversAlive == 2 && statistics.TotalAlive <= 3)
-            {
-                if (!DestroyableSingleton<TutorialManager>.BMHJGNNOGDM)
-                {
-                    __instance.enabled = false;
-                    ShipStatus.EABBNOODFGL((GameOverReason) CustomGameOverReason.LoversWin, false);
-                    return true;
-                }
-
-                DestroyableSingleton<HudManager>.CHNDKKBEIDG.ShowPopUp(
-                    DestroyableSingleton<TranslationController>.CHNDKKBEIDG.GetString(StringNames.GameOverImpostorDead,
-                        new Il2CppReferenceArray<Il2CppSystem.Object>(0)));
-                ReviveEveryone();
-                return true;
-            }
-
-            return false;
+            if (statistics.TeamLoversAlive != 2 || statistics.TotalAlive > 3) return false;
+            __instance.enabled = false;
+            ShipStatus.RpcEndGame((GameOverReason) CustomGameOverReason.LoversWin, false);
+            return true;
         }
 
         private static bool CheckAndEndGameForJackalWin(ShipStatus __instance, PlayerStatistics statistics)
         {
-            if (statistics.TeamJackalAlive >= statistics.TotalAlive - statistics.TeamJackalAlive &&
-                statistics.TeamImpostorsAlive == 0 &&
-                !(statistics.TeamJackalHasAliveLover && statistics.TeamLoversAlive == 2))
-            {
-                if (!DestroyableSingleton<TutorialManager>.BMHJGNNOGDM)
-                {
-                    __instance.enabled = false;
-                    ShipStatus.EABBNOODFGL((GameOverReason) CustomGameOverReason.TeamJackalWin, false);
-                    return true;
-                }
-
-                DestroyableSingleton<HudManager>.CHNDKKBEIDG.ShowPopUp(
-                    DestroyableSingleton<TranslationController>.CHNDKKBEIDG.GetString(StringNames.GameOverImpostorKills,
-                        new Il2CppReferenceArray<Il2CppSystem.Object>(0)));
-                ReviveEveryone();
-                return true;
-            }
-
-            return false;
+            if (statistics.TeamJackalAlive < statistics.TotalAlive - statistics.TeamJackalAlive ||
+                statistics.TeamImpostorsAlive != 0 ||
+                statistics.TeamJackalHasAliveLover && statistics.TeamLoversAlive == 2) return false;
+            __instance.enabled = false;
+            ShipStatus.RpcEndGame((GameOverReason) CustomGameOverReason.TeamJackalWin, false);
+            return true;
         }
 
         private static bool CheckAndEndGameForImpostorWin(ShipStatus __instance, PlayerStatistics statistics)
         {
-            if (statistics.TeamImpostorsAlive >= statistics.TotalAlive - statistics.TeamImpostorsAlive &&
-                statistics.TeamJackalAlive == 0 &&
-                !(statistics.TeamImpostorHasAliveLover && statistics.TeamLoversAlive == 2))
+            if (statistics.TeamImpostorsAlive < statistics.TotalAlive - statistics.TeamImpostorsAlive ||
+                statistics.TeamJackalAlive != 0 ||
+                statistics.TeamImpostorHasAliveLover && statistics.TeamLoversAlive == 2) return false;
+            __instance.enabled = false;
+            var endReason = TempData.LastDeathReason switch
             {
-                if (!DestroyableSingleton<TutorialManager>.BMHJGNNOGDM)
-                {
-                    __instance.enabled = false;
-                    GameOverReason endReason;
-                    switch (TempData.PJPCCFAPCKJ)
-                    {
-                        case DeathReason.Exile:
-                            endReason = GameOverReason.ImpostorByVote;
-                            break;
-                        case DeathReason.Kill:
-                            endReason = GameOverReason.ImpostorByKill;
-                            break;
-                        default:
-                            endReason = GameOverReason.ImpostorByVote;
-                            break;
-                    }
+                DeathReason.Exile => GameOverReason.ImpostorByVote,
+                DeathReason.Kill => GameOverReason.ImpostorByKill,
+                _ => GameOverReason.ImpostorByVote
+            };
 
-                    ShipStatus.EABBNOODFGL(endReason, false);
-                    return true;
-                }
-
-                DestroyableSingleton<HudManager>.CHNDKKBEIDG.ShowPopUp(
-                    DestroyableSingleton<TranslationController>.CHNDKKBEIDG.GetString(StringNames.GameOverImpostorKills,
-                        new Il2CppReferenceArray<Il2CppSystem.Object>(0)));
-                ReviveEveryone();
-                return true;
-            }
-
-            return false;
+            ShipStatus.RpcEndGame(endReason, false);
+            return true;
         }
 
         private static bool CheckAndEndGameForCrewmateWin(ShipStatus __instance, PlayerStatistics statistics)
         {
-            if (statistics.TeamImpostorsAlive == 0 && statistics.TeamJackalAlive == 0)
-            {
-                if (!DestroyableSingleton<TutorialManager>.BMHJGNNOGDM)
-                {
-                    __instance.enabled = false;
-                    ShipStatus.EABBNOODFGL(GameOverReason.HumansByVote, false);
-                    return true;
-                }
-
-                DestroyableSingleton<HudManager>.CHNDKKBEIDG.ShowPopUp(
-                    DestroyableSingleton<TranslationController>.CHNDKKBEIDG.GetString(StringNames.GameOverImpostorDead,
-                        new Il2CppReferenceArray<Il2CppSystem.Object>(0)));
-                ReviveEveryone();
-                return true;
-            }
-
-            return false;
+            if (statistics.TeamImpostorsAlive != 0 || statistics.TeamJackalAlive != 0) return false;
+            __instance.enabled = false;
+            ShipStatus.RpcEndGame(GameOverReason.HumansByVote, false);
+            return true;
         }
 
-        private static void ReviveEveryone()
+        private static void EndGameForSabotage(Behaviour __instance)
         {
-            for (int i = 0; i < GameData.Instance.MFDAIFHGKMG; i++)
-                GameData.Instance.AllPlayers[i].GJPBCGFPMOD.Revive();
-            DeadBody[] array = UnityEngine.Object.FindObjectsOfType<DeadBody>();
-            for (int i = 0; i < array.Length; i++) UnityEngine.Object.Destroy(array[i].gameObject);
-        }
-
-        private static void EndGameForSabotage(ShipStatus __instance)
-        {
-            if (!DestroyableSingleton<TutorialManager>.BMHJGNNOGDM)
-            {
-                __instance.enabled = false;
-                ShipStatus.EABBNOODFGL(GameOverReason.ImpostorBySabotage, false);
-                return;
-            }
-
-            DestroyableSingleton<HudManager>.CHNDKKBEIDG.ShowPopUp(
-                DestroyableSingleton<TranslationController>.CHNDKKBEIDG.GetString(StringNames.GameOverSabotage,
-                    new Il2CppReferenceArray<Il2CppSystem.Object>(0)));
-            ReviveEveryone();
+            __instance.enabled = false;
+            ShipStatus.RpcEndGame(GameOverReason.ImpostorBySabotage, false);
         }
     }
 
@@ -499,55 +361,49 @@ namespace Modpack
 
         public PlayerStatistics(ShipStatus __instance)
         {
-            GetMFDAIFHGKMGs();
+            GetPlayerCounts();
         }
 
-        private bool isLover(GameData.LGBOMGHJELL p)
+        private static bool isLover(GameData.PlayerInfo p)
         {
-            return (Lovers.lover1 != null && Lovers.lover1.PlayerId == p.FNPNJHNKEBK) ||
-                   (Lovers.lover2 != null && Lovers.lover2.PlayerId == p.FNPNJHNKEBK);
+            return (Lovers.lover1 != null && Lovers.lover1.PlayerId == p.PlayerId) ||
+                   (Lovers.lover2 != null && Lovers.lover2.PlayerId == p.PlayerId);
         }
 
-        private void GetMFDAIFHGKMGs()
+        private void GetPlayerCounts()
         {
-            int numJackalAlive = 0;
-            int numImpostorsAlive = 0;
-            int numLoversAlive = 0;
-            int numTotalAlive = 0;
-            bool impLover = false;
-            bool jackalLover = false;
+            var numJackalAlive = 0;
+            var numImpostorsAlive = 0;
+            var numLoversAlive = 0;
+            var numTotalAlive = 0;
+            var impLover = false;
+            var jackalLover = false;
 
-            for (int i = 0; i < GameData.Instance.MFDAIFHGKMG; i++)
+            for (var i = 0; i < GameData.Instance.PlayerCount; i++)
             {
-                GameData.LGBOMGHJELL LGBOMGHJELL = GameData.Instance.AllPlayers[i];
-                if (!LGBOMGHJELL.MFFAGDHDHLO)
+                GameData.PlayerInfo playerInfo = GameData.Instance.AllPlayers[i];
+                if (playerInfo.Disconnected) continue;
+                if (playerInfo.IsDead) continue;
+                numTotalAlive++;
+
+                var lover = isLover(playerInfo);
+                if (lover) numLoversAlive++;
+
+                if (playerInfo.IsImpostor)
                 {
-                    if (!LGBOMGHJELL.IAGJEKLJCCI)
-                    {
-                        numTotalAlive++;
-
-                        bool lover = isLover(LGBOMGHJELL);
-                        if (lover) numLoversAlive++;
-
-                        if (LGBOMGHJELL.FDNMBJOAPFL)
-                        {
-                            numImpostorsAlive++;
-                            if (lover) impLover = true;
-                        }
-
-                        if (Jackal.jackal != null && Jackal.jackal.PlayerId == LGBOMGHJELL.FNPNJHNKEBK)
-                        {
-                            numJackalAlive++;
-                            if (lover) jackalLover = true;
-                        }
-
-                        if (Sidekick.sidekick != null && Sidekick.sidekick.PlayerId == LGBOMGHJELL.FNPNJHNKEBK)
-                        {
-                            numJackalAlive++;
-                            if (lover) jackalLover = true;
-                        }
-                    }
+                    numImpostorsAlive++;
+                    if (lover) impLover = true;
                 }
+
+                if (Jackal.jackal != null && Jackal.jackal.PlayerId == playerInfo.PlayerId)
+                {
+                    numJackalAlive++;
+                    if (lover) jackalLover = true;
+                }
+
+                if (Sidekick.sidekick == null || Sidekick.sidekick.PlayerId != playerInfo.PlayerId) continue;
+                numJackalAlive++;
+                if (lover) jackalLover = true;
             }
 
             TeamJackalAlive = numJackalAlive;
