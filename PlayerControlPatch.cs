@@ -19,12 +19,13 @@ namespace Modpack
         // Helpers
 
         private static PlayerControl setTarget(bool onlyCrewmates = false, bool targetPlayersInVents = false,
-            IReadOnlyCollection<PlayerControl> untargetablePlayers = null, PlayerControl targetingPlayer = null)
+            List<PlayerControl> untargetablePlayers = null, PlayerControl targetingPlayer = null)
         {
             PlayerControl result = null;
             var num = GameOptionsData.KillDistances[Mathf.Clamp(PlayerControl.GameOptions.KillDistance, 0, 2)];
             if (!ShipStatus.Instance) return null;
             if (targetingPlayer == null) targetingPlayer = PlayerControl.LocalPlayer;
+            if (targetingPlayer.Data.IsDead) return null;
 
             var truePosition = targetingPlayer.GetTruePosition();
             var allPlayers = GameData.Instance.AllPlayers;
@@ -203,7 +204,7 @@ namespace Modpack
         {
             if (Vampire.vampire == null || Vampire.vampire != PlayerControl.LocalPlayer) return;
 
-            PlayerControl target;
+            PlayerControl target = null;
             if (Spy.spy != null)
             {
                 target = Spy.impostorsCanKillAnyone
@@ -274,10 +275,10 @@ namespace Modpack
         {
             if (Eraser.eraser == null || Eraser.eraser != PlayerControl.LocalPlayer) return;
 
-            var untargatables = new List<PlayerControl>();
-            if (Spy.spy != null) untargatables.Add(Spy.spy);
-            Eraser.currentTarget = setTarget(!Eraser.canEraseAnyone,
-                untargetablePlayers: Eraser.canEraseAnyone ? new List<PlayerControl>() : untargatables);
+            var untargetables = new List<PlayerControl>();
+            if (Spy.spy != null) untargetables.Add(Spy.spy);
+            Eraser.currentTarget = setTarget(onlyCrewmates: !Eraser.canEraseAnyone,
+                untargetablePlayers: Eraser.canEraseAnyone ? new List<PlayerControl>() : untargetables);
             setPlayerOutline(Eraser.currentTarget, Eraser.color);
         }
 
@@ -316,7 +317,7 @@ namespace Modpack
                 return;
             }
 
-            PlayerControl target;
+            PlayerControl target = null;
             if (Spy.spy != null)
             {
                 target = Spy.impostorsCanKillAnyone
@@ -423,53 +424,101 @@ namespace Modpack
             collider.radius = correctedColliderRadius;
         }
 
-        public static void updateGhostInfo()
+        public static void updatePlayerInfo()
         {
-            if (!MapOptions.showGhostInfo) return;
-
             foreach (var p in PlayerControl.AllPlayerControls)
             {
                 if (p != PlayerControl.LocalPlayer && !PlayerControl.LocalPlayer.Data.IsDead) continue;
 
-                var playerGhostInfoTransform = p.transform.FindChild("GhostInfo");
-                var playerGhostInfo = playerGhostInfoTransform != null
-                    ? playerGhostInfoTransform.GetComponent<TMPro.TextMeshPro>()
+                var playerInfoTransform = p.transform.FindChild("Info");
+                var playerInfo = playerInfoTransform != null
+                    ? playerInfoTransform.GetComponent<TMPro.TextMeshPro>()
                     : null;
-                if (playerGhostInfo == null)
+                if (playerInfo == null)
                 {
-                    playerGhostInfo = UnityEngine.Object.Instantiate(p.nameText, p.nameText.transform.parent);
-                    playerGhostInfo.transform.localPosition += Vector3.up * 0.25f;
-                    playerGhostInfo.fontSize *= 0.75f;
-                    playerGhostInfo.gameObject.name = "GhostInfo";
+                    playerInfo = UnityEngine.Object.Instantiate(p.nameText, p.nameText.transform.parent);
+                    playerInfo.transform.localPosition += Vector3.up * 0.25f;
+                    playerInfo.fontSize *= 0.75f;
+                    playerInfo.gameObject.name = "Info";
                 }
 
                 var playerVoteArea =
                     MeetingHud.Instance?.playerStates?.FirstOrDefault(x => x.TargetPlayerId == p.PlayerId);
-                var meetingGhostInfoTransform =
-                    playerVoteArea != null ? playerVoteArea.transform.FindChild("GhostInfo") : null;
-                var meetingGhostInfo = meetingGhostInfoTransform != null
-                    ? meetingGhostInfoTransform.GetComponent<TMPro.TextMeshPro>()
+                var meetingInfoTransform = playerVoteArea != null ? playerVoteArea.transform.FindChild("Info") : null;
+                var meetingInfo = meetingInfoTransform != null
+                    ? meetingInfoTransform.GetComponent<TMPro.TextMeshPro>()
                     : null;
-                if (meetingGhostInfo == null && playerVoteArea != null)
+                if (meetingInfo == null && playerVoteArea != null)
                 {
-                    meetingGhostInfo = UnityEngine.Object.Instantiate(playerVoteArea.NameText,
+                    meetingInfo = UnityEngine.Object.Instantiate(playerVoteArea.NameText,
                         playerVoteArea.NameText.transform.parent);
-                    meetingGhostInfo.transform.localPosition +=
+                    meetingInfo.transform.localPosition +=
                         Vector3.down * (MeetingHud.Instance.playerStates.Length > 10 ? 0.4f : 0.25f);
-                    meetingGhostInfo.fontSize *= 0.75f;
-                    meetingGhostInfo.gameObject.name = "GhostInfo";
+                    meetingInfo.fontSize *= 0.75f;
+                    meetingInfo.gameObject.name = "Info";
                 }
 
                 var (tasksCompleted, tasksTotal) = TasksHandler.taskInfo(p.Data);
                 var roleNames = String.Join(", ",
                     RoleInfo.getRoleInfoForPlayer(p).Select(x => Helpers.cs(x.color, x.name)).ToArray());
                 var taskInfo = tasksTotal > 0 ? $"<color=#FAD934FF>({tasksCompleted}/{tasksTotal})</color>" : "";
-                playerGhostInfo.text = $"{roleNames} {taskInfo}".Trim();
-                if (meetingGhostInfo != null)
-                    meetingGhostInfo.text = MeetingHud.Instance.state == MeetingHud.VoteStates.Results
-                        ? ""
-                        : $"{roleNames} {taskInfo}".Trim();
+
+                var info = "";
+                if (p == PlayerControl.LocalPlayer)
+                {
+                    info = $"{roleNames}";
+                    if (DestroyableSingleton<TaskPanelBehaviour>.InstanceExists)
+                    {
+                        var tabText = DestroyableSingleton<TaskPanelBehaviour>.Instance.tab.transform
+                            .FindChild("TabText_TMP").GetComponent<TMPro.TextMeshPro>();
+                        tabText.SetText($"Tasks {taskInfo}");
+                    }
+                }
+                else if (MapOptions.ghostsSeeRoles && MapOptions.ghostsSeeTasks)
+                    info = $"{roleNames} {taskInfo}".Trim();
+                else if (MapOptions.ghostsSeeTasks)
+                    info = $"{taskInfo}".Trim();
+                else if (MapOptions.ghostsSeeRoles)
+                    info = $"{roleNames}";
+
+                playerInfo.text = info;
+                playerInfo.gameObject.SetActive(p.Visible);
+                if (meetingInfo != null)
+                    meetingInfo.text = MeetingHud.Instance.state == MeetingHud.VoteStates.Results ? "" : info;
             }
+        }
+
+        public static void securityGuardSetTarget()
+        {
+            if (SecurityGuard.securityGuard == null || SecurityGuard.securityGuard != PlayerControl.LocalPlayer ||
+                ShipStatus.Instance == null || ShipStatus.Instance.AllVents == null) return;
+
+            Vent target = null;
+            var truePosition = PlayerControl.LocalPlayer.GetTruePosition();
+            var closestDistance = float.MaxValue;
+            foreach (var vent in ShipStatus.Instance.AllVents)
+            {
+                if (vent.gameObject.name.StartsWith("JackInTheBoxVent_") ||
+                    vent.gameObject.name.StartsWith("SealedVent_") ||
+                    vent.gameObject.name.StartsWith("FutureSealedVent_")) continue;
+                var distance = Vector2.Distance(vent.transform.position, truePosition);
+                if (!(distance <= vent.UsableDistance) || !(distance < closestDistance)) continue;
+                closestDistance = distance;
+                target = vent;
+            }
+
+            SecurityGuard.ventTarget = target;
+        }
+
+        public static void arsonistSetTarget()
+        {
+            if (Arsonist.arsonist == null || Arsonist.arsonist != PlayerControl.LocalPlayer) return;
+            var untargetables = Arsonist.douseTarget != null
+                ? PlayerControl.AllPlayerControls.ToArray().Where(x => x.PlayerId != Arsonist.douseTarget.PlayerId)
+                    .ToList()
+                : Arsonist.dousedPlayers;
+            Arsonist.currentTarget = setTarget(untargetablePlayers: untargetables);
+            if (Arsonist.currentTarget != null) setPlayerOutline(Arsonist.currentTarget, Arsonist.color);
         }
 
         public static void Postfix(PlayerControl __instance)
@@ -486,8 +535,8 @@ namespace Modpack
             // Update Role Description
             Helpers.refreshRoleDescription(__instance);
 
-            // Update Ghost Info
-            updateGhostInfo();
+            // Update Player Info
+            updatePlayerInfo();
 
             // Time Master
             bendTimeUpdate();
@@ -522,6 +571,10 @@ namespace Modpack
             warlockSetTarget();
             // Check for sidekick promotion on Jackal disconnect
             sidekickCheckPromotion();
+            // SecurityGuard
+            securityGuardSetTarget();
+            // Arsonist
+            arsonistSetTarget();
         }
     }
 
@@ -569,34 +622,27 @@ namespace Modpack
         }
     }
 
-    [HarmonyPatch(typeof(KillButtonManager), nameof(KillButtonManager.PerformKill))]
-    internal class PerformKillPatch
+    [HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.RpcMurderPlayer))]
+    internal class RpcMurderPlayer
     {
-        public static bool Prefix(KillButtonManager __instance)
+        public static bool Prefix([HarmonyArgument(0)] PlayerControl target)
         {
-            if (!__instance.isActiveAndEnabled || !__instance.CurrentTarget || __instance.isCoolingDown ||
-                PlayerControl.LocalPlayer.Data.IsDead || !PlayerControl.LocalPlayer.CanMove) return false;
-            // Among Us default checks
-            if (!Helpers.handleMurderAttempt(__instance.CurrentTarget)) return false;
-            // Custom checks
+            if (!Helpers.handleMurderAttempt(target)) return false; // Custom checks
             if (Child.child != null && PlayerControl.LocalPlayer == Child.child)
             {
                 // Not checked by official servers
                 var writer = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId,
                     (byte) CustomRPC.UncheckedMurderPlayer, Hazel.SendOption.Reliable, -1);
                 writer.Write(PlayerControl.LocalPlayer.PlayerId);
-                writer.Write(__instance.CurrentTarget.PlayerId);
+                writer.Write(target.PlayerId);
                 AmongUsClient.Instance.FinishRpcImmediately(writer);
-                RPCProcedure.uncheckedMurderPlayer(PlayerControl.LocalPlayer.PlayerId,
-                    __instance.CurrentTarget.PlayerId);
+                RPCProcedure.uncheckedMurderPlayer(PlayerControl.LocalPlayer.PlayerId, target.PlayerId);
             }
             else
             {
                 // Checked by official servers
-                PlayerControl.LocalPlayer.RpcMurderPlayer(__instance.CurrentTarget);
+                return true;
             }
-
-            __instance.SetTarget(null);
 
             return false;
         }

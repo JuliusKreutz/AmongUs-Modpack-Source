@@ -42,7 +42,9 @@ namespace Modpack
         Spy,
         Trickster,
         Cleaner,
-        Warlock
+        Warlock,
+        SecurityGuard,
+        Arsonist
     }
 
     internal enum CustomRPC
@@ -57,7 +59,7 @@ namespace Modpack
         VersionHandshake,
         UseUncheckedVent,
         UncheckedMurderPlayer,
-
+        OpenToiletDoor,
         // Role functionality
 
         EngineerFixLights = 81,
@@ -86,7 +88,10 @@ namespace Modpack
         SetFutureShifted,
         PlaceJackInTheBox,
         LightsOut,
-        WarlockCurseKill
+        WarlockCurseKill,
+        PlaceCamera,
+        SealVent,
+        ArsonistWin
     }
 
     public static class RPCProcedure
@@ -105,7 +110,7 @@ namespace Modpack
 
         public static void shareOptionSelection(uint id, uint selection)
         {
-            var option = CustomOption.options.FirstOrDefault(customOption => customOption.id == (int) id);
+            var option = CustomOption.options.FirstOrDefault(o => o.id == (int) id);
             option?.updateSelection((int) selection);
         }
 
@@ -217,6 +222,12 @@ namespace Modpack
                         case RoleId.Warlock:
                             Warlock.warlock = player;
                             break;
+                        case RoleId.SecurityGuard:
+                            SecurityGuard.securityGuard = player;
+                            break;
+                        case RoleId.Arsonist:
+                            Arsonist.arsonist = player;
+                            break;
                     }
                 }
         }
@@ -227,9 +238,9 @@ namespace Modpack
             if (player != null) player.SetColor(colorId);
         }
 
-        public static void versionHandshake(byte major, byte minor, byte patch, int clientId)
+        public static void versionHandshake(int major, int minor, int build, int clientId)
         {
-            GameStartManagerPatch.playerVersions[clientId] = new Tuple<byte, byte, byte>(major, minor, patch);
+            GameStartManagerPatch.playerVersions[clientId] = new Version(major, minor, build);
         }
 
         public static void useUncheckedVent(int ventId, byte playerId, byte isEnter)
@@ -366,7 +377,8 @@ namespace Modpack
             Shifter.clearAndReload();
 
             // Suicide (exile) when impostor or impostor variants
-            if (player.Data.IsImpostor || player == Jackal.jackal || player == Sidekick.sidekick)
+            if (player.Data.IsImpostor || player == Jackal.jackal || player == Sidekick.sidekick ||
+                Jackal.formerJackals.Contains(player) || player == Jester.jester || player == Arsonist.arsonist)
             {
                 oldShifter.Exiled();
                 return;
@@ -450,6 +462,18 @@ namespace Modpack
             else if (Spy.spy != null && Spy.spy == player)
             {
                 Spy.spy = oldShifter;
+            }
+            else if (SecurityGuard.securityGuard != null && SecurityGuard.securityGuard == player)
+            {
+                SecurityGuard.securityGuard = oldShifter;
+            }
+            else if (Arsonist.arsonist != null && Arsonist.arsonist == player)
+            {
+                Arsonist.arsonist = oldShifter;
+            }
+            else
+            {
+                // Crewmate
             }
 
             // Set cooldowns to max for both players
@@ -609,6 +633,7 @@ namespace Modpack
             if (player == Snitch.snitch) Snitch.clearAndReload();
             if (player == Swapper.swapper) Swapper.clearAndReload();
             if (player == Spy.spy) Spy.clearAndReload();
+            if (player == SecurityGuard.securityGuard) SecurityGuard.clearAndReload();
 
             // Impostor roles
             if (player == Morphling.morphling) Morphling.clearAndReload();
@@ -624,6 +649,7 @@ namespace Modpack
 
             // Other roles
             if (player == Jester.jester) Jester.clearAndReload();
+            if (player == Arsonist.arsonist) Arsonist.clearAndReload();
             if (player == Lovers.lover1 || player == Lovers.lover2)
             {
                 // The whole Lover couple is being erased
@@ -686,6 +712,64 @@ namespace Modpack
                 return;
             }
         }
+
+        public static void placeCamera(byte[] buff)
+        {
+            var referenceCamera = UnityEngine.Object.FindObjectOfType<SurvCamera>();
+            if (referenceCamera == null) return; // Mira HQ
+
+            SecurityGuard.remainingScrews -= SecurityGuard.camPrice;
+            SecurityGuard.placedCameras++;
+
+            var position = Vector3.zero;
+            position.x = BitConverter.ToSingle(buff, 0 * sizeof(float));
+            position.y = BitConverter.ToSingle(buff, 1 * sizeof(float));
+
+            var camera = UnityEngine.Object.Instantiate(referenceCamera);
+            camera.transform.position = new Vector3(position.x, position.y, referenceCamera.transform.position.z - 1f);
+            camera.CamName = $"Security Camera {SecurityGuard.placedCameras}";
+            camera.Offset = new Vector3(0f, 0f, camera.Offset.z);
+            if (PlayerControl.GameOptions.MapId == 2 || PlayerControl.GameOptions.MapId == 4)
+                camera.transform.localRotation = new Quaternion(0, 0, 1, 1); // Polus and Airship 
+
+            if (PlayerControl.LocalPlayer == SecurityGuard.securityGuard)
+            {
+                camera.gameObject.SetActive(true);
+                camera.gameObject.GetComponent<SpriteRenderer>().color = new Color(1f, 1f, 1f, 0.5f);
+            }
+            else
+            {
+                camera.gameObject.SetActive(false);
+            }
+
+            camerasToAdd.Add(camera);
+        }
+
+        public static void sealVent(int ventId)
+        {
+            var vent = ShipStatus.Instance.AllVents.FirstOrDefault((x) => x != null && x.Id == ventId);
+            if (vent == null) return;
+
+            SecurityGuard.remainingScrews -= SecurityGuard.ventPrice;
+            if (PlayerControl.LocalPlayer == SecurityGuard.securityGuard)
+            {
+                var animator = vent.GetComponent<PowerTools.SpriteAnim>();
+                animator?.Stop();
+                vent.EnterVentAnim = vent.ExitVentAnim = null;
+                vent.myRend.sprite = animator == null
+                    ? SecurityGuard.getStaticVentSealedSprite()
+                    : SecurityGuard.getAnimatedVentSealedSprite();
+                vent.myRend.color = new Color(1f, 1f, 1f, 0.5f);
+                vent.name = "FutureSealedVent_" + vent.name;
+            }
+
+            ventsToSeal.Add(vent);
+        }
+
+        public static void arsonistWin()
+        {
+            Arsonist.triggerArsonistWin = true;
+        }
     }
 
     [HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.HandleRpc))]
@@ -736,6 +820,14 @@ namespace Modpack
                     var source = reader.ReadByte();
                     var target = reader.ReadByte();
                     RPCProcedure.uncheckedMurderPlayer(source, target);
+                    break;
+
+                // Fixes
+
+                case (byte) CustomRPC.OpenToiletDoor:
+                    var doorId = reader.ReadInt32();
+                    var door = UnityEngine.Object.FindObjectsOfType<PlainDoor>().FirstOrDefault(d => d.Id == doorId);
+                    door?.SetDoorway(true);
                     break;
 
                 // Role functionality
@@ -824,6 +916,15 @@ namespace Modpack
                     break;
                 case (byte) CustomRPC.WarlockCurseKill:
                     RPCProcedure.warlockCurseKill(reader.ReadByte());
+                    break;
+                case (byte) CustomRPC.PlaceCamera:
+                    RPCProcedure.placeCamera(reader.ReadBytesAndSize());
+                    break;
+                case (byte) CustomRPC.SealVent:
+                    RPCProcedure.sealVent(reader.ReadPackedInt32());
+                    break;
+                case (byte) CustomRPC.ArsonistWin:
+                    RPCProcedure.arsonistWin();
                     break;
             }
         }

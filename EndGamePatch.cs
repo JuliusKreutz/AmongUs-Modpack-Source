@@ -1,8 +1,8 @@
 using HarmonyLib;
 using static Modpack.Modpack;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
+using System.Linq;
 
 namespace Modpack
 {
@@ -11,7 +11,8 @@ namespace Modpack
         LoversWin = 10,
         TeamJackalWin = 11,
         ChildLose = 12,
-        JesterWin = 13
+        JesterWin = 13,
+        ArsonistWin = 14
     }
 
     internal enum WinCondition
@@ -21,7 +22,8 @@ namespace Modpack
         LoversSoloWin,
         JesterWin,
         JackalWin,
-        ChildLose
+        ChildLose,
+        ArsonistWin
     }
 
     internal static class AdditionalTempData
@@ -55,41 +57,25 @@ namespace Modpack
         {
             AdditionalTempData.clear();
 
-            // Remove Jester from winners (on Jester win he will be added again, see below)
-            if (Jester.jester != null)
-            {
-                WinningPlayerData jesterWinner = null;
-                foreach (var winner in TempData.winners)
-                    if (winner.Name == Jester.jester.Data.PlayerName)
-                        jesterWinner = winner;
+            // Remove Jester, Arsonist, Jackal, former Jackals and Sidekick from winners (if they win, they'll be readded)
+            var notWinners = new List<PlayerControl>();
+            if (Jester.jester != null) notWinners.Add(Jester.jester);
+            if (Sidekick.sidekick != null) notWinners.Add(Sidekick.sidekick);
+            if (Jackal.jackal != null) notWinners.Add(Jackal.jackal);
+            if (Arsonist.arsonist != null) notWinners.Add(Arsonist.arsonist);
+            notWinners.AddRange(Jackal.formerJackals);
 
-                if (jesterWinner != null) TempData.winners.Remove(jesterWinner);
+            var winnersToRemove = new List<WinningPlayerData>();
+            foreach (var winner in TempData.winners)
+            {
+                if (notWinners.Any(x => x.Data.PlayerName == winner.Name)) winnersToRemove.Add(winner);
             }
 
-            // Remove Jackal and Sidekick from winners (on Jackal win he will be added again, see below)
-            if (Jackal.jackal != null || Sidekick.sidekick != null)
-            {
-                var winnersToRemove = new List<WinningPlayerData>();
-                foreach (var winner in TempData.winners)
-                {
-                    if (winner.Name == Jackal.jackal?.Data?.PlayerName) winnersToRemove.Add(winner);
-                    if (winner.Name == Sidekick.sidekick?.Data?.PlayerName) winnersToRemove.Add(winner);
-                    foreach (var player in Jackal.formerJackals)
-                    {
-                        if (winner.Name == player.Data.PlayerName)
-                        {
-                            winnersToRemove.Add(winner);
-                        }
-                    }
-                }
-
-                foreach (var winner in winnersToRemove)
-                {
-                    TempData.winners.Remove(winner);
-                }
-            }
+            foreach (var winner in winnersToRemove) TempData.winners.Remove(winner);
 
             var jesterWin = Jester.jester != null && gameOverReason == (GameOverReason) CustomGameOverReason.JesterWin;
+            var arsonistWin = Arsonist.arsonist != null &&
+                              gameOverReason == (GameOverReason) CustomGameOverReason.ArsonistWin;
             var childLose = Child.child != null && gameOverReason == (GameOverReason) CustomGameOverReason.ChildLose;
             var loversWin = Lovers.existingAndAlive() &&
                             (gameOverReason == (GameOverReason) CustomGameOverReason.LoversWin ||
@@ -119,6 +105,15 @@ namespace Modpack
                 AdditionalTempData.winCondition = WinCondition.JesterWin;
             }
 
+            // Arsonist win
+            else if (arsonistWin)
+            {
+                TempData.winners = new Il2CppSystem.Collections.Generic.List<WinningPlayerData>();
+                var wpd = new WinningPlayerData(Arsonist.arsonist.Data);
+                TempData.winners.Add(wpd);
+                AdditionalTempData.winCondition = WinCondition.ArsonistWin;
+            }
+
             // Lovers win conditions
             else if (loversWin)
             {
@@ -135,7 +130,7 @@ namespace Modpack
                         if (p == Lovers.lover1 || p == Lovers.lover2)
                             TempData.winners.Add(new WinningPlayerData(p.Data));
                         else if (p != Jester.jester && p != Jackal.jackal && p != Sidekick.sidekick &&
-                                 !p.Data.IsImpostor)
+                                 p != Arsonist.arsonist && !Jackal.formerJackals.Contains(p) && !p.Data.IsImpostor)
                             TempData.winners.Add(new WinningPlayerData(p.Data));
                     }
                 }
@@ -156,11 +151,13 @@ namespace Modpack
                 AdditionalTempData.winCondition = WinCondition.JackalWin;
                 TempData.winners = new Il2CppSystem.Collections.Generic.List<WinningPlayerData>();
                 var wpd = new WinningPlayerData(Jackal.jackal.Data) {IsImpostor = false};
+
                 TempData.winners.Add(wpd);
                 // If there is a sidekick. The sidekick also wins
                 if (Sidekick.sidekick != null)
                 {
                     var wpdSidekick = new WinningPlayerData(Sidekick.sidekick.Data) {IsImpostor = false};
+
                     TempData.winners.Add(wpdSidekick);
                 }
 
@@ -184,10 +181,9 @@ namespace Modpack
 
         public static void Postfix(EndGameManager __instance)
         {
-            var bonusText = Object.Instantiate(__instance.WinText.gameObject);
+            var bonusText = UnityEngine.Object.Instantiate(__instance.WinText.gameObject);
             var position = __instance.WinText.transform.position;
-            bonusText.transform.position = new Vector3(position.x,
-                position.y - 0.8f, position.z);
+            bonusText.transform.position = new Vector3(position.x, position.y - 0.8f, position.z);
             bonusText.transform.localScale = new Vector3(0.7f, 0.7f, 1f);
             var textRenderer = bonusText.GetComponent<TMPro.TMP_Text>();
             textRenderer.text = "";
@@ -197,6 +193,10 @@ namespace Modpack
                 case WinCondition.JesterWin:
                     textRenderer.text = "Jester Wins";
                     textRenderer.color = Jester.color;
+                    break;
+                case WinCondition.ArsonistWin:
+                    textRenderer.text = "Arsonist Wins";
+                    textRenderer.color = Arsonist.color;
                     break;
                 case WinCondition.LoversTeamWin:
                 {
@@ -223,6 +223,8 @@ namespace Modpack
                     textRenderer.text = "Child died";
                     textRenderer.color = Child.color;
                     break;
+                case WinCondition.Default:
+                    break;
             }
 
             AdditionalTempData.clear();
@@ -241,6 +243,7 @@ namespace Modpack
             var statistics = new PlayerStatistics(__instance);
             if (CheckAndEndGameForChildLose(__instance)) return false;
             if (CheckAndEndGameForJesterWin(__instance)) return false;
+            if (CheckAndEndGameForArsonistWin(__instance)) return false;
             if (CheckAndEndGameForSabotageWin(__instance)) return false;
             if (CheckAndEndGameForTaskWin(__instance)) return false;
             if (CheckAndEndGameForLoverWin(__instance, statistics)) return false;
@@ -249,7 +252,7 @@ namespace Modpack
             return CheckAndEndGameForCrewmateWin(__instance, statistics) && false;
         }
 
-        private static bool CheckAndEndGameForChildLose(Behaviour __instance)
+        private static bool CheckAndEndGameForChildLose(ShipStatus __instance)
         {
             if (!Child.triggerChildLose) return false;
             __instance.enabled = false;
@@ -257,11 +260,19 @@ namespace Modpack
             return true;
         }
 
-        private static bool CheckAndEndGameForJesterWin(Behaviour __instance)
+        private static bool CheckAndEndGameForJesterWin(ShipStatus __instance)
         {
             if (!Jester.triggerJesterWin) return false;
             __instance.enabled = false;
             ShipStatus.RpcEndGame((GameOverReason) CustomGameOverReason.JesterWin, false);
+            return true;
+        }
+
+        private static bool CheckAndEndGameForArsonistWin(ShipStatus __instance)
+        {
+            if (!Arsonist.triggerArsonistWin) return false;
+            __instance.enabled = false;
+            ShipStatus.RpcEndGame((GameOverReason) CustomGameOverReason.ArsonistWin, false);
             return true;
         }
 
@@ -364,7 +375,7 @@ namespace Modpack
             GetPlayerCounts();
         }
 
-        private static bool isLover(GameData.PlayerInfo p)
+        private bool isLover(GameData.PlayerInfo p)
         {
             return (Lovers.lover1 != null && Lovers.lover1.PlayerId == p.PlayerId) ||
                    (Lovers.lover2 != null && Lovers.lover2.PlayerId == p.PlayerId);

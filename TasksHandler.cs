@@ -35,6 +35,8 @@ namespace Modpack
                 for (var i = 0; i < __instance.AllPlayers.Count; i++)
                 {
                     GameData.PlayerInfo playerInfo = __instance.AllPlayers[i];
+                    if (playerInfo.Object && playerInfo.Object.hasAliveKillingLover())
+                        continue;
                     var (playerCompleted, playerTotal) = taskInfo(playerInfo);
                     __instance.TotalTasks += playerTotal;
                     __instance.CompletedTasks += playerCompleted;

@@ -4,18 +4,19 @@ using BepInEx.Configuration;
 using System;
 using System.Linq;
 using HarmonyLib;
+using Hazel;
 using System.Reflection;
 using System.Text;
 using static Modpack.Modpack;
 
 namespace Modpack
 {
-    public static class CustomOptionHolder
+    public class CustomOptionHolder
     {
         public static readonly object[] rates =
             {"0%", "10%", "20%", "30%", "40%", "50%", "60%", "70%", "80%", "90%", "100%"};
 
-        public static readonly object[] crewmateRoleCaps =
+        public static readonly object[] crewmateAndNeutralRoleCaps =
         {
             "0", "0-1", "1", "1-2", "2", "2-3", "3", "3-4", "4", "4-5", "5", "5-6", "6", "6-7", "7", "7-8", "8", "8-9",
             "9", "9-10", "10", "10-11", "11", "11-12", "12", "12-13", "13", "13-14", "14", "14-15", "15"
@@ -26,6 +27,7 @@ namespace Modpack
 
         public static CustomOption presetSelection;
         public static CustomOption crewmateRolesCount;
+        public static CustomOption neutralRolesCount;
         public static CustomOption impostorRolesCount;
 
         public static CustomOption mafiaSpawnRate;
@@ -58,6 +60,21 @@ namespace Modpack
         public static CustomOption jesterSpawnRate;
         public static CustomOption jesterCanCallEmergency;
 
+        public static CustomOption arsonistSpawnRate;
+        public static CustomOption arsonistCooldown;
+        public static CustomOption arsonistDuration;
+
+        public static CustomOption jackalSpawnRate;
+        public static CustomOption jackalKillCooldown;
+        public static CustomOption jackalCreateSidekickCooldown;
+        public static CustomOption jackalCanUseVents;
+        public static CustomOption jackalCanCreateSidekick;
+        public static CustomOption sidekickPromotesToJackal;
+        public static CustomOption sidekickCanKill;
+        public static CustomOption sidekickCanUseVents;
+        public static CustomOption jackalPromotedFromSidekickCanCreateSidekick;
+        public static CustomOption jackalCanCreateSidekickFromImpostor;
+
         public static CustomOption shifterSpawnRate;
 
         public static CustomOption mayorSpawnRate;
@@ -66,7 +83,7 @@ namespace Modpack
 
         public static CustomOption sheriffSpawnRate;
         public static CustomOption sheriffCooldown;
-        public static CustomOption jesterCanDieToSheriff;
+        public static CustomOption sheriffCanKillNeutrals;
 
         public static CustomOption lighterSpawnRate;
         public static CustomOption lighterModeLightsOnVision;
@@ -109,17 +126,6 @@ namespace Modpack
         public static CustomOption snitchSpawnRate;
         public static CustomOption snitchLeftTasksForImpostors;
 
-        public static CustomOption jackalSpawnRate;
-        public static CustomOption jackalKillCooldown;
-        public static CustomOption jackalCreateSidekickCooldown;
-        public static CustomOption jackalCanUseVents;
-        public static CustomOption jackalCanCreateSidekick;
-        public static CustomOption sidekickPromotesToJackal;
-        public static CustomOption sidekickCanKill;
-        public static CustomOption sidekickCanUseVents;
-        public static CustomOption jackalPromotedFromSidekickCanCreateSidekick;
-        public static CustomOption jackalCanCreateSidekickFromImpostor;
-
         public static CustomOption spySpawnRate;
         public static CustomOption spyCanDieToSheriff;
         public static CustomOption spyImpostorsCanKillAnyone;
@@ -136,11 +142,16 @@ namespace Modpack
         public static CustomOption warlockCooldown;
         public static CustomOption warlockRootTime;
 
+        public static CustomOption securityGuardSpawnRate;
+        public static CustomOption securityGuardCooldown;
+        public static CustomOption securityGuardTotalScrews;
+        public static CustomOption securityGuardCamPrice;
+        public static CustomOption securityGuardVentPrice;
+
         public static CustomOption maxNumberOfMeetings;
         public static CustomOption blockSkippingInEmergencyMeetings;
         public static CustomOption noVoteIsSelfVote;
         public static CustomOption hidePlayerNames;
-        public static CustomOption showGhostInfo;
 
         internal static readonly Dictionary<byte, byte[]> blockedRolePairings = new Dictionary<byte, byte[]>();
 
@@ -162,8 +173,10 @@ namespace Modpack
                 null, true);
 
             crewmateRolesCount = CustomOption.Create(1,
-                cs(new Color(204f / 255f, 204f / 255f, 0, 1f), "Number Of Crewmate/Neutral Roles"), crewmateRoleCaps,
+                cs(new Color(204f / 255f, 204f / 255f, 0, 1f), "Number Of Crewmate Roles"), crewmateAndNeutralRoleCaps,
                 null, true);
+            neutralRolesCount = CustomOption.Create(7,
+                cs(new Color(204f / 255f, 204f / 255f, 0, 1f), "Number Of Neutral Roles"), crewmateAndNeutralRoleCaps);
             impostorRolesCount = CustomOption.Create(2,
                 cs(new Color(204f / 255f, 204f / 255f, 0, 1f), "Number Of Impostor Roles"), impostorRoleCaps);
 
@@ -216,6 +229,26 @@ namespace Modpack
             jesterCanCallEmergency =
                 CustomOption.Create(61, "Jester can call emergency meeting", true, jesterSpawnRate);
 
+            arsonistSpawnRate = CustomOption.Create(290, cs(Arsonist.color, "Arsonist"), rates, null, true);
+            arsonistCooldown = CustomOption.Create(291, "Arsonist Cooldown", 30f, 5f, 60f, 2.5f, arsonistSpawnRate);
+            arsonistDuration = CustomOption.Create(292, "Arsonist Douse Duration", 3f, 1f, 10f, 1f, arsonistSpawnRate);
+
+            jackalSpawnRate = CustomOption.Create(220, cs(Jackal.color, "Jackal"), rates, null, true);
+            jackalKillCooldown =
+                CustomOption.Create(221, "Jackal/Sidekick Kill Cooldown", 30f, 10f, 60f, 2.5f, jackalSpawnRate);
+            jackalCreateSidekickCooldown = CustomOption.Create(222, "Jackal Create Sidekick Cooldown", 30f, 10f, 60f,
+                2.5f, jackalSpawnRate);
+            jackalCanUseVents = CustomOption.Create(223, "Jackal Can Use Vents", true, jackalSpawnRate);
+            jackalCanCreateSidekick = CustomOption.Create(224, "Jackal Can Create A Sidekick", false, jackalSpawnRate);
+            sidekickPromotesToJackal = CustomOption.Create(225, "Sidekick Gets Promoted To Jackal On Jackal Death",
+                false, jackalSpawnRate);
+            sidekickCanKill = CustomOption.Create(226, "Sidekick Can Kill", false, jackalSpawnRate);
+            sidekickCanUseVents = CustomOption.Create(227, "Sidekick Can Use Vents", true, jackalSpawnRate);
+            jackalPromotedFromSidekickCanCreateSidekick = CustomOption.Create(228,
+                "Jackals Promoted From Sidekick Can Create A Sidekick", true, jackalSpawnRate);
+            jackalCanCreateSidekickFromImpostor = CustomOption.Create(229,
+                "Jackals Can Make An Impostor To His Sidekick", true, jackalSpawnRate);
+
             shifterSpawnRate = CustomOption.Create(70, cs(Shifter.color, "Shifter"), rates, null, true);
 
             mayorSpawnRate = CustomOption.Create(80, cs(Mayor.color, "Mayor"), rates, null, true);
@@ -224,7 +257,7 @@ namespace Modpack
 
             sheriffSpawnRate = CustomOption.Create(100, cs(Sheriff.color, "Sheriff"), rates, null, true);
             sheriffCooldown = CustomOption.Create(101, "Sheriff Cooldown", 30f, 10f, 60f, 2.5f, sheriffSpawnRate);
-            jesterCanDieToSheriff = CustomOption.Create(102, "Sheriff Can Kill The Jester", false, sheriffSpawnRate);
+            sheriffCanKillNeutrals = CustomOption.Create(102, "Sheriff Can Kill Neutrals", false, sheriffSpawnRate);
 
 
             lighterSpawnRate = CustomOption.Create(110, cs(Lighter.color, "Lighter"), rates, null, true);
@@ -283,26 +316,21 @@ namespace Modpack
             snitchLeftTasksForImpostors = CustomOption.Create(211, "Task Count Where Impostors See Snitch", 1f, 0f, 5f,
                 1f, snitchSpawnRate);
 
-            jackalSpawnRate = CustomOption.Create(220, cs(Jackal.color, "Jackal"), rates, null, true);
-            jackalKillCooldown =
-                CustomOption.Create(221, "Jackal/Sidekick Kill Cooldown", 30f, 10f, 60f, 2.5f, jackalSpawnRate);
-            jackalCreateSidekickCooldown = CustomOption.Create(222, "Jackal Create Sidekick Cooldown", 30f, 10f, 60f,
-                2.5f, jackalSpawnRate);
-            jackalCanUseVents = CustomOption.Create(223, "Jackal Can Use Vents", true, jackalSpawnRate);
-            jackalCanCreateSidekick = CustomOption.Create(224, "Jackal Can Create A Sidekick", false, jackalSpawnRate);
-            sidekickPromotesToJackal = CustomOption.Create(225, "Sidekick Gets Promoted To Jackal On Jackal Death",
-                false, jackalSpawnRate);
-            sidekickCanKill = CustomOption.Create(226, "Sidekick Can Kill", false, jackalSpawnRate);
-            sidekickCanUseVents = CustomOption.Create(227, "Sidekick Can Use Vents", true, jackalSpawnRate);
-            jackalPromotedFromSidekickCanCreateSidekick = CustomOption.Create(228,
-                "Jackals Promoted From Sidekick Can Create A Sidekick", true, jackalSpawnRate);
-            jackalCanCreateSidekickFromImpostor = CustomOption.Create(229,
-                "Jackals Can Make An Impostor To His Sidekick", true, jackalSpawnRate);
-
             spySpawnRate = CustomOption.Create(240, cs(Spy.color, "Spy"), rates, null, true);
             spyCanDieToSheriff = CustomOption.Create(241, "Spy Can Die To Sheriff", false, spySpawnRate);
             spyImpostorsCanKillAnyone =
                 CustomOption.Create(242, "Impostors Can Kill Anyone If There Is A Spy", true, spySpawnRate);
+
+            securityGuardSpawnRate =
+                CustomOption.Create(280, cs(SecurityGuard.color, "Security Guard"), rates, null, true);
+            securityGuardCooldown = CustomOption.Create(281, "Security Guard Cooldown", 30f, 10f, 60f, 2.5f,
+                securityGuardSpawnRate);
+            securityGuardTotalScrews = CustomOption.Create(282, "Security Guard Number Of Screws", 7f, 1f, 15f, 1f,
+                securityGuardSpawnRate);
+            securityGuardCamPrice =
+                CustomOption.Create(283, "Number Of Screws Per Cam", 2f, 1f, 15f, 1f, securityGuardSpawnRate);
+            securityGuardVentPrice =
+                CustomOption.Create(284, "Number Of Screws Per Vent", 1f, 1f, 15f, 1f, securityGuardSpawnRate);
 
             // Other options
             maxNumberOfMeetings = CustomOption.Create(3, "Number Of Meetings (excluding Mayor meeting)", 10, 0, 15, 1,
@@ -310,7 +338,6 @@ namespace Modpack
             blockSkippingInEmergencyMeetings = CustomOption.Create(4, "Block Skipping In Emergency Meetings", false);
             noVoteIsSelfVote = CustomOption.Create(5, "No Vote Is Self Vote", false, blockSkippingInEmergencyMeetings);
             hidePlayerNames = CustomOption.Create(6, "Hide Player Names", false);
-            showGhostInfo = CustomOption.Create(7, "Ghosts Can See Roles And Remaining Tasks", true);
 
             blockedRolePairings.Add((byte) RoleId.Vampire, new[] {(byte) RoleId.Warlock});
             blockedRolePairings.Add((byte) RoleId.Warlock, new[] {(byte) RoleId.Vampire});
@@ -335,8 +362,8 @@ namespace Modpack
 
         // Option creation
 
-        public CustomOption(int id, string name, System.Object[] selections, System.Object defaultValue,
-            CustomOption parent, bool isHeader)
+        public CustomOption(int id, string name, object[] selections, object defaultValue, CustomOption parent,
+            bool isHeader)
         {
             this.id = id;
             this.name = parent == null ? name : "- " + name;
@@ -401,7 +428,7 @@ namespace Modpack
             {
                 if (AmongUsClient.Instance is null) continue;
                 var messageWriter = AmongUsClient.Instance.StartRpc(PlayerControl.LocalPlayer.NetId,
-                    (byte) CustomRPC.ShareOptionSelection, Hazel.SendOption.Reliable);
+                    (byte) CustomRPC.ShareOptionSelection, SendOption.Reliable);
                 messageWriter.WritePacked((uint) option.id);
                 messageWriter.WritePacked(Convert.ToUInt32(option.selection));
                 messageWriter.EndMessage();
@@ -478,8 +505,7 @@ namespace Modpack
     {
         public static bool Prefix(StringOption __instance)
         {
-            var option =
-                CustomOption.options.FirstOrDefault(customOption => customOption.optionBehaviour == __instance);
+            var option = CustomOption.options.FirstOrDefault(o => o.optionBehaviour == __instance);
             if (option == null) return true;
 
             __instance.OnValueChanged = new Action<OptionBehaviour>((o) => { });
@@ -496,8 +522,7 @@ namespace Modpack
     {
         public static bool Prefix(StringOption __instance)
         {
-            var option =
-                CustomOption.options.FirstOrDefault(customOption => customOption.optionBehaviour == __instance);
+            var option = CustomOption.options.FirstOrDefault(o => o.optionBehaviour == __instance);
             if (option == null) return true;
             option.updateSelection(option.selection + 1);
             return false;
@@ -509,8 +534,7 @@ namespace Modpack
     {
         public static bool Prefix(StringOption __instance)
         {
-            var option =
-                CustomOption.options.FirstOrDefault(customOption => customOption.optionBehaviour == __instance);
+            var option = CustomOption.options.FirstOrDefault(o => o.optionBehaviour == __instance);
             if (option == null) return true;
             option.updateSelection(option.selection - 1);
             return false;
@@ -556,9 +580,7 @@ namespace Modpack
                 offset -= option.isHeader ? 0.75f : 0.5f;
                 var transform = option.optionBehaviour.transform;
                 var localPosition = transform.localPosition;
-                localPosition = new Vector3(
-                    localPosition.x, offset,
-                    localPosition.z);
+                localPosition = new Vector3(localPosition.x, offset, localPosition.z);
                 transform.localPosition = localPosition;
             }
         }
@@ -570,6 +592,37 @@ namespace Modpack
         public static void Prefix(GameSettingMenu __instance)
         {
             __instance.HideForOnline = new Transform[] { };
+        }
+
+        public static void Postfix(GameSettingMenu __instance)
+        {
+            var mapNameTransform = __instance.AllItems.FirstOrDefault(x =>
+                x.gameObject.activeSelf && x.name.Equals("MapName", StringComparison.OrdinalIgnoreCase));
+            if (mapNameTransform == null) return;
+
+            var options =
+                new Il2CppSystem.Collections.Generic.List<Il2CppSystem.Collections.Generic.KeyValuePair<string, int>>();
+            for (var i = 0; i < GameOptionsData.MapNames.Length; i++)
+            {
+                var kvp = new Il2CppSystem.Collections.Generic.KeyValuePair<string, int>
+                {
+                    key = GameOptionsData.MapNames[i], value = i
+                };
+                options.Add(kvp);
+            }
+
+            mapNameTransform.GetComponent<KeyValueOption>().Values = options;
+        }
+    }
+
+    [HarmonyPatch(typeof(Constants), nameof(Constants.ShouldFlipSkeld))]
+    internal class ConstantsShouldFlipSkeldPatch
+    {
+        public static bool Prefix(ref bool __result)
+        {
+            if (PlayerControl.GameOptions == null) return true;
+            __result = PlayerControl.GameOptions.MapId == 3;
+            return false;
         }
     }
 
@@ -603,7 +656,7 @@ namespace Modpack
             var hudString = sb.ToString();
 
             var defaultSettingsLines = 19;
-            var roleSettingsLines = defaultSettingsLines + 29;
+            var roleSettingsLines = defaultSettingsLines + 32;
             var detailedSettingsP1 = roleSettingsLines + 34;
             var detailedSettingsP2 = detailedSettingsP1 + 36;
             var end1 = hudString.TakeWhile(c => (defaultSettingsLines -= (c == '\n' ? 1 : 0)) > 0).Count();
@@ -623,13 +676,13 @@ namespace Modpack
                     var gap = 1;
                     var index = hudString.TakeWhile(c => (gap -= (c == '\n' ? 1 : 0)) > 0).Count();
                     hudString = hudString.Insert(index, "\n");
-                    gap = 4;
+                    gap = 5;
                     index = hudString.TakeWhile(c => (gap -= (c == '\n' ? 1 : 0)) > 0).Count();
                     hudString = hudString.Insert(index, "\n");
-                    gap = 13;
+                    gap = 16;
                     index = hudString.TakeWhile(c => (gap -= (c == '\n' ? 1 : 0)) > 0).Count();
                     hudString = hudString.Insert(index + 1, "\n");
-                    gap = 16;
+                    gap = 20;
                     index = hudString.TakeWhile(c => (gap -= (c == '\n' ? 1 : 0)) > 0).Count();
                     hudString = hudString.Insert(index + 1, "\n");
                     break;

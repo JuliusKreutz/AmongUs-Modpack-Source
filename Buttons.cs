@@ -1,7 +1,9 @@
 using HarmonyLib;
+using Hazel;
 using System;
 using UnityEngine;
 using static Modpack.Modpack;
+using Object = UnityEngine.Object;
 
 namespace Modpack
 {
@@ -29,6 +31,9 @@ namespace Modpack
         private static CustomButton lightsOutButton;
         public static CustomButton cleanerCleanButton;
         public static CustomButton warlockCurseButton;
+        public static CustomButton securityGuardButton;
+        public static CustomButton arsonistButton;
+        public static TMPro.TMP_Text securityGuardButtonScrewsText;
 
         public static void setCustomButtonCooldowns()
         {
@@ -53,6 +58,8 @@ namespace Modpack
             lightsOutButton.MaxTimer = Trickster.lightsOutCooldown;
             cleanerCleanButton.MaxTimer = Cleaner.cooldown;
             warlockCurseButton.MaxTimer = Warlock.cooldown;
+            securityGuardButton.MaxTimer = SecurityGuard.cooldown;
+            arsonistButton.MaxTimer = Arsonist.cooldown;
 
             timeMasterShieldButton.EffectDuration = TimeMaster.shieldDuration;
             hackerButton.EffectDuration = Hacker.duration;
@@ -61,6 +68,7 @@ namespace Modpack
             camouflagerButton.EffectDuration = Camouflager.duration;
             morphlingButton.EffectDuration = Morphling.duration;
             lightsOutButton.EffectDuration = Trickster.lightsOutDuration;
+            arsonistButton.EffectDuration = Arsonist.duration;
 
             // Already set the timer to the max, as the button is enabled during the game and not available at the start
             lightsOutButton.Timer = lightsOutButton.MaxTimer;
@@ -82,7 +90,7 @@ namespace Modpack
                     engineerRepairButton.Timer = 0f;
 
                     var usedRepairWriter = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId,
-                        (byte) CustomRPC.EngineerUsedRepair, Hazel.SendOption.Reliable, -1);
+                        (byte) CustomRPC.EngineerUsedRepair, SendOption.Reliable, -1);
                     AmongUsClient.Instance.FinishRpcImmediately(usedRepairWriter);
                     RPCProcedure.engineerUsedRepair();
 
@@ -93,7 +101,7 @@ namespace Modpack
                             case TaskTypes.FixLights:
                             {
                                 var writer = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId,
-                                    (byte) CustomRPC.EngineerFixLights, Hazel.SendOption.Reliable, -1);
+                                    (byte) CustomRPC.EngineerFixLights, SendOption.Reliable, -1);
                                 AmongUsClient.Instance.FinishRpcImmediately(writer);
                                 RPCProcedure.engineerFixLights();
                                 break;
@@ -116,116 +124,6 @@ namespace Modpack
                                 ShipStatus.Instance.RpcRepairSystem(SystemTypes.Reactor, 0 | 16);
                                 ShipStatus.Instance.RpcRepairSystem(SystemTypes.Reactor, 1 | 16);
                                 break;
-                            case TaskTypes.SubmitScan:
-                                break;
-                            case TaskTypes.PrimeShields:
-                                break;
-                            case TaskTypes.FuelEngines:
-                                break;
-                            case TaskTypes.ChartCourse:
-                                break;
-                            case TaskTypes.StartReactor:
-                                break;
-                            case TaskTypes.SwipeCard:
-                                break;
-                            case TaskTypes.ClearAsteroids:
-                                break;
-                            case TaskTypes.UploadData:
-                                break;
-                            case TaskTypes.InspectSample:
-                                break;
-                            case TaskTypes.EmptyChute:
-                                break;
-                            case TaskTypes.EmptyGarbage:
-                                break;
-                            case TaskTypes.AlignEngineOutput:
-                                break;
-                            case TaskTypes.FixWiring:
-                                break;
-                            case TaskTypes.CalibrateDistributor:
-                                break;
-                            case TaskTypes.DivertPower:
-                                break;
-                            case TaskTypes.UnlockManifolds:
-                                break;
-                            case TaskTypes.CleanO2Filter:
-                                break;
-                            case TaskTypes.StabilizeSteering:
-                                break;
-                            case TaskTypes.AssembleArtifact:
-                                break;
-                            case TaskTypes.SortSamples:
-                                break;
-                            case TaskTypes.MeasureWeather:
-                                break;
-                            case TaskTypes.EnterIdCode:
-                                break;
-                            case TaskTypes.BuyBeverage:
-                                break;
-                            case TaskTypes.ProcessData:
-                                break;
-                            case TaskTypes.RunDiagnostics:
-                                break;
-                            case TaskTypes.WaterPlants:
-                                break;
-                            case TaskTypes.MonitorOxygen:
-                                break;
-                            case TaskTypes.StoreArtifacts:
-                                break;
-                            case TaskTypes.FillCanisters:
-                                break;
-                            case TaskTypes.ActivateWeatherNodes:
-                                break;
-                            case TaskTypes.InsertKeys:
-                                break;
-                            case TaskTypes.ScanBoardingPass:
-                                break;
-                            case TaskTypes.OpenWaterways:
-                                break;
-                            case TaskTypes.ReplaceWaterJug:
-                                break;
-                            case TaskTypes.RepairDrill:
-                                break;
-                            case TaskTypes.AlignTelescope:
-                                break;
-                            case TaskTypes.RecordTemperature:
-                                break;
-                            case TaskTypes.RebootWifi:
-                                break;
-                            case TaskTypes.PolishRuby:
-                                break;
-                            case TaskTypes.ResetBreakers:
-                                break;
-                            case TaskTypes.Decontaminate:
-                                break;
-                            case TaskTypes.MakeBurger:
-                                break;
-                            case TaskTypes.UnlockSafe:
-                                break;
-                            case TaskTypes.SortRecords:
-                                break;
-                            case TaskTypes.PutAwayPistols:
-                                break;
-                            case TaskTypes.FixShower:
-                                break;
-                            case TaskTypes.CleanToilet:
-                                break;
-                            case TaskTypes.DressMannequin:
-                                break;
-                            case TaskTypes.PickUpTowels:
-                                break;
-                            case TaskTypes.RewindTapes:
-                                break;
-                            case TaskTypes.StartFans:
-                                break;
-                            case TaskTypes.DevelopPhotos:
-                                break;
-                            case TaskTypes.GetBiggolSword:
-                                break;
-                            case TaskTypes.PutAwayRifles:
-                                break;
-                            default:
-                                throw new ArgumentOutOfRangeException();
                         }
                     }
                 },
@@ -262,13 +160,12 @@ namespace Modpack
                         var truePosition2 = component.TruePosition;
                         if (!(Vector2.Distance(truePosition2, truePosition) <=
                               PlayerControl.LocalPlayer.MaxReportDistance) || !PlayerControl.LocalPlayer.CanMove ||
-                            PhysicsHelpers.AnythingBetween(truePosition, truePosition2,
-                                Constants.ShipAndObjectsMask, false)) continue;
+                            PhysicsHelpers.AnythingBetween(truePosition, truePosition2, Constants.ShipAndObjectsMask,
+                                false)) continue;
                         var playerInfo = GameData.Instance.GetPlayerById(component.ParentId);
 
-                        var writer = AmongUsClient.Instance.StartRpcImmediately(
-                            PlayerControl.LocalPlayer.NetId, (byte) CustomRPC.CleanBody,
-                            Hazel.SendOption.Reliable, -1);
+                        var writer = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId,
+                            (byte) CustomRPC.CleanBody, SendOption.Reliable, -1);
                         writer.Write(playerInfo.PlayerId);
                         AmongUsClient.Instance.FinishRpcImmediately(writer);
                         RPCProcedure.cleanBody(playerInfo.PlayerId);
@@ -295,20 +192,20 @@ namespace Modpack
                     if (Medic.shielded != null && Medic.shielded == Sheriff.currentTarget)
                     {
                         var attemptWriter = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId,
-                            (byte) CustomRPC.ShieldedMurderAttempt, Hazel.SendOption.Reliable, -1);
+                            (byte) CustomRPC.ShieldedMurderAttempt, SendOption.Reliable, -1);
                         AmongUsClient.Instance.FinishRpcImmediately(attemptWriter);
                         RPCProcedure.shieldedMurderAttempt();
                         return;
                     }
 
-                    byte targetId;
-                    if ((Sheriff.currentTarget.Data.IsImpostor &&
-                         (Sheriff.currentTarget != Child.child || Child.isGrownUp())) ||
-                        Sheriff.currentTarget == Jackal.jackal ||
-                        Sheriff.currentTarget == Sidekick.sidekick ||
-                        (Sheriff.spyCanDieToSheriff && Spy.spy != null && Spy.spy == Sheriff.currentTarget) ||
-                        (Sheriff.jesterCanDieToSheriff && Jester.jester != null &&
-                         Jester.jester == Sheriff.currentTarget))
+                    byte targetId = 0;
+                    if (Sheriff.currentTarget.Data.IsImpostor &&
+                        (Sheriff.currentTarget != Child.child || Child.isGrownUp()) ||
+                        Sheriff.spyCanDieToSheriff && Spy.spy == Sheriff.currentTarget ||
+                        Sheriff.canKillNeutrals && (Arsonist.arsonist == Sheriff.currentTarget ||
+                                                    Jester.jester == Sheriff.currentTarget ||
+                                                    Jackal.jackal == Sheriff.currentTarget ||
+                                                    Sidekick.sidekick == Sheriff.currentTarget))
                     {
                         targetId = Sheriff.currentTarget.PlayerId;
                     }
@@ -318,7 +215,7 @@ namespace Modpack
                     }
 
                     var killWriter = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId,
-                        (byte) CustomRPC.SheriffKill, Hazel.SendOption.Reliable, -1);
+                        (byte) CustomRPC.SheriffKill, SendOption.Reliable, -1);
                     killWriter.Write(targetId);
                     AmongUsClient.Instance.FinishRpcImmediately(killWriter);
                     RPCProcedure.sheriffKill(targetId);
@@ -341,7 +238,7 @@ namespace Modpack
                 () =>
                 {
                     var writer = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId,
-                        (byte) CustomRPC.TimeMasterShield, Hazel.SendOption.Reliable, -1);
+                        (byte) CustomRPC.TimeMasterShield, SendOption.Reliable, -1);
                     AmongUsClient.Instance.FinishRpcImmediately(writer);
                     RPCProcedure.timeMasterShield();
                 },
@@ -370,7 +267,7 @@ namespace Modpack
                     medicShieldButton.Timer = 0f;
 
                     var writer = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId,
-                        (byte) CustomRPC.MedicSetShielded, Hazel.SendOption.Reliable, -1);
+                        (byte) CustomRPC.MedicSetShielded, SendOption.Reliable, -1);
                     writer.Write(Medic.currentTarget.PlayerId);
                     AmongUsClient.Instance.FinishRpcImmediately(writer);
                     RPCProcedure.medicSetShielded(Medic.currentTarget.PlayerId);
@@ -391,7 +288,7 @@ namespace Modpack
                 () =>
                 {
                     var writer = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId,
-                        (byte) CustomRPC.SetFutureShifted, Hazel.SendOption.Reliable, -1);
+                        (byte) CustomRPC.SetFutureShifted, SendOption.Reliable, -1);
                     writer.Write(Shifter.currentTarget.PlayerId);
                     AmongUsClient.Instance.FinishRpcImmediately(writer);
                     RPCProcedure.setFutureShifted(Shifter.currentTarget.PlayerId);
@@ -413,7 +310,7 @@ namespace Modpack
                     if (Morphling.sampledTarget != null)
                     {
                         var writer = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId,
-                            (byte) CustomRPC.MorphlingMorph, Hazel.SendOption.Reliable, -1);
+                            (byte) CustomRPC.MorphlingMorph, SendOption.Reliable, -1);
                         writer.Write(Morphling.sampledTarget.PlayerId);
                         AmongUsClient.Instance.FinishRpcImmediately(writer);
                         RPCProcedure.morphlingMorph(Morphling.sampledTarget.PlayerId);
@@ -457,7 +354,7 @@ namespace Modpack
                 () =>
                 {
                     var writer = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId,
-                        (byte) CustomRPC.CamouflagerCamouflage, Hazel.SendOption.Reliable, -1);
+                        (byte) CustomRPC.CamouflagerCamouflage, SendOption.Reliable, -1);
                     AmongUsClient.Instance.FinishRpcImmediately(writer);
                     RPCProcedure.camouflagerCamouflage();
                 },
@@ -505,7 +402,7 @@ namespace Modpack
                 () =>
                 {
                     var writer = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId,
-                        (byte) CustomRPC.TrackerUsedTracker, Hazel.SendOption.Reliable, -1);
+                        (byte) CustomRPC.TrackerUsedTracker, SendOption.Reliable, -1);
                     writer.Write(Tracker.currentTarget.PlayerId);
                     AmongUsClient.Instance.FinishRpcImmediately(writer);
                     RPCProcedure.trackerUsedTracker(Tracker.currentTarget.PlayerId);
@@ -527,7 +424,14 @@ namespace Modpack
                     {
                         if (Vampire.targetNearGarlic)
                         {
-                            PlayerControl.LocalPlayer.RpcMurderPlayer(Vampire.currentTarget);
+                            var writer = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId,
+                                (byte) CustomRPC.UncheckedMurderPlayer, SendOption.Reliable, -1);
+                            writer.Write(Vampire.vampire.PlayerId);
+                            writer.Write(Vampire.currentTarget.PlayerId);
+                            AmongUsClient.Instance.FinishRpcImmediately(writer);
+                            RPCProcedure.uncheckedMurderPlayer(Vampire.vampire.PlayerId,
+                                Vampire.currentTarget.PlayerId);
+
                             vampireKillButton.HasEffect = false; // Block effect on this click
                             vampireKillButton.Timer = vampireKillButton.MaxTimer;
                         }
@@ -536,7 +440,7 @@ namespace Modpack
                             Vampire.bitten = Vampire.currentTarget;
                             // Notify players about bitten
                             var writer = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId,
-                                (byte) CustomRPC.VampireSetBitten, Hazel.SendOption.Reliable, -1);
+                                (byte) CustomRPC.VampireSetBitten, SendOption.Reliable, -1);
                             writer.Write(Vampire.bitten.PlayerId);
                             writer.Write(0);
                             AmongUsClient.Instance.FinishRpcImmediately(writer);
@@ -552,7 +456,7 @@ namespace Modpack
                                     // Perform kill
                                     var killWriter = AmongUsClient.Instance.StartRpcImmediately(
                                         PlayerControl.LocalPlayer.NetId, (byte) CustomRPC.VampireTryKill,
-                                        Hazel.SendOption.Reliable, -1);
+                                        SendOption.Reliable, -1);
                                     AmongUsClient.Instance.FinishRpcImmediately(killWriter);
                                     RPCProcedure.vampireTryKill();
                                 }
@@ -561,7 +465,7 @@ namespace Modpack
                                     // Notify players about clearing bitten
                                     var rpcWriter = AmongUsClient.Instance.StartRpcImmediately(
                                         PlayerControl.LocalPlayer.NetId, (byte) CustomRPC.VampireSetBitten,
-                                        Hazel.SendOption.Reliable, -1);
+                                        SendOption.Reliable, -1);
                                     rpcWriter.Write(byte.MaxValue);
                                     rpcWriter.Write(byte.MaxValue);
                                     AmongUsClient.Instance.FinishRpcImmediately(rpcWriter);
@@ -613,13 +517,12 @@ namespace Modpack
                     Buffer.BlockCopy(BitConverter.GetBytes(pos.y), 0, buff, 1 * sizeof(float), sizeof(float));
 
                     var writer = AmongUsClient.Instance.StartRpc(PlayerControl.LocalPlayer.NetId,
-                        (byte) CustomRPC.PlaceGarlic, Hazel.SendOption.Reliable);
+                        (byte) CustomRPC.PlaceGarlic, SendOption.Reliable);
                     writer.WriteBytesAndSize(buff);
                     writer.EndMessage();
                     RPCProcedure.placeGarlic(buff);
                 },
-                () => !Vampire.localPlacedGarlic && !PlayerControl.LocalPlayer.Data.IsDead &&
-                      Vampire.garlicsActive,
+                () => !Vampire.localPlacedGarlic && !PlayerControl.LocalPlayer.Data.IsDead && Vampire.garlicsActive,
                 () => PlayerControl.LocalPlayer.CanMove && !Vampire.localPlacedGarlic,
                 () => { },
                 Vampire.getGarlicButtonSprite(),
@@ -635,7 +538,7 @@ namespace Modpack
                 () =>
                 {
                     var writer = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId,
-                        (byte) CustomRPC.JackalCreatesSidekick, Hazel.SendOption.Reliable, -1);
+                        (byte) CustomRPC.JackalCreatesSidekick, SendOption.Reliable, -1);
                     writer.Write(Jackal.currentTarget.PlayerId);
                     AmongUsClient.Instance.FinishRpcImmediately(writer);
                     RPCProcedure.jackalCreatesSidekick(Jackal.currentTarget.PlayerId);
@@ -660,7 +563,7 @@ namespace Modpack
                     if (!Helpers.handleMurderAttempt(Jackal.currentTarget)) return;
                     var targetId = Jackal.currentTarget.PlayerId;
                     var killWriter = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId,
-                        (byte) CustomRPC.JackalKill, Hazel.SendOption.Reliable, -1);
+                        (byte) CustomRPC.JackalKill, SendOption.Reliable, -1);
                     killWriter.Write(targetId);
                     AmongUsClient.Instance.FinishRpcImmediately(killWriter);
                     RPCProcedure.jackalKill(targetId);
@@ -684,7 +587,7 @@ namespace Modpack
                     if (!Helpers.handleMurderAttempt(Sidekick.currentTarget)) return;
                     var targetId = Sidekick.currentTarget.PlayerId;
                     var killWriter = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId,
-                        (byte) CustomRPC.SidekickKill, Hazel.SendOption.Reliable, -1);
+                        (byte) CustomRPC.SidekickKill, SendOption.Reliable, -1);
                     killWriter.Write(targetId);
                     AmongUsClient.Instance.FinishRpcImmediately(killWriter);
                     RPCProcedure.sidekickKill(targetId);
@@ -692,8 +595,8 @@ namespace Modpack
                     sidekickKillButton.Timer = sidekickKillButton.MaxTimer;
                     Sidekick.currentTarget = null;
                 },
-                () => Sidekick.canKill && Sidekick.sidekick != null &&
-                      Sidekick.sidekick == PlayerControl.LocalPlayer && !PlayerControl.LocalPlayer.Data.IsDead,
+                () => Sidekick.canKill && Sidekick.sidekick != null && Sidekick.sidekick == PlayerControl.LocalPlayer &&
+                      !PlayerControl.LocalPlayer.Data.IsDead,
                 () => Sidekick.currentTarget && PlayerControl.LocalPlayer.CanMove,
                 () => { sidekickKillButton.Timer = sidekickKillButton.MaxTimer; },
                 sprite,
@@ -731,7 +634,7 @@ namespace Modpack
                     eraserButton.Timer = eraserButton.MaxTimer;
 
                     var writer = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId,
-                        (byte) CustomRPC.SetFutureErased, Hazel.SendOption.Reliable, -1);
+                        (byte) CustomRPC.SetFutureErased, SendOption.Reliable, -1);
                     writer.Write(Eraser.currentTarget.PlayerId);
                     AmongUsClient.Instance.FinishRpcImmediately(writer);
                     RPCProcedure.setFutureErased(Eraser.currentTarget.PlayerId);
@@ -757,7 +660,7 @@ namespace Modpack
                     Buffer.BlockCopy(BitConverter.GetBytes(pos.y), 0, buff, 1 * sizeof(float), sizeof(float));
 
                     var writer = AmongUsClient.Instance.StartRpc(PlayerControl.LocalPlayer.NetId,
-                        (byte) CustomRPC.PlaceJackInTheBox, Hazel.SendOption.Reliable);
+                        (byte) CustomRPC.PlaceJackInTheBox, SendOption.Reliable);
                     writer.WriteBytesAndSize(buff);
                     writer.EndMessage();
                     RPCProcedure.placeJackInTheBox(buff);
@@ -776,7 +679,7 @@ namespace Modpack
                 () =>
                 {
                     var writer = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId,
-                        (byte) CustomRPC.LightsOut, Hazel.SendOption.Reliable, -1);
+                        (byte) CustomRPC.LightsOut, SendOption.Reliable, -1);
                     AmongUsClient.Instance.FinishRpcImmediately(writer);
                     RPCProcedure.lightsOut();
                 },
@@ -813,13 +716,12 @@ namespace Modpack
                         var truePosition2 = component.TruePosition;
                         if (!(Vector2.Distance(truePosition2, truePosition) <=
                               PlayerControl.LocalPlayer.MaxReportDistance) || !PlayerControl.LocalPlayer.CanMove ||
-                            PhysicsHelpers.AnythingBetween(truePosition, truePosition2,
-                                Constants.ShipAndObjectsMask, false)) continue;
+                            PhysicsHelpers.AnythingBetween(truePosition, truePosition2, Constants.ShipAndObjectsMask,
+                                false)) continue;
                         var playerInfo = GameData.Instance.GetPlayerById(component.ParentId);
 
-                        var writer = AmongUsClient.Instance.StartRpcImmediately(
-                            PlayerControl.LocalPlayer.NetId, (byte) CustomRPC.CleanBody,
-                            Hazel.SendOption.Reliable, -1);
+                        var writer = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId,
+                            (byte) CustomRPC.CleanBody, SendOption.Reliable, -1);
                         writer.Write(playerInfo.PlayerId);
                         AmongUsClient.Instance.FinishRpcImmediately(writer);
                         RPCProcedure.cleanBody(playerInfo.PlayerId);
@@ -838,6 +740,7 @@ namespace Modpack
                 __instance,
                 KeyCode.F
             );
+
             // Warlock curse
             warlockCurseButton = new CustomButton(
                 () =>
@@ -856,7 +759,7 @@ namespace Modpack
                         Warlock.curseKillTarget = Warlock.curseVictimTarget;
 
                         var writer = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId,
-                            (byte) CustomRPC.WarlockCurseKill, Hazel.SendOption.Reliable, -1);
+                            (byte) CustomRPC.WarlockCurseKill, SendOption.Reliable, -1);
                         writer.Write(Warlock.curseKillTarget.PlayerId);
                         AmongUsClient.Instance.FinishRpcImmediately(writer);
                         RPCProcedure.warlockCurseKill(Warlock.curseKillTarget.PlayerId);
@@ -882,8 +785,8 @@ namespace Modpack
                 },
                 () => Warlock.warlock != null && Warlock.warlock == PlayerControl.LocalPlayer &&
                       !PlayerControl.LocalPlayer.Data.IsDead,
-                () => ((Warlock.curseVictim == null && Warlock.currentTarget != null) ||
-                       (Warlock.curseVictim != null && Warlock.curseVictimTarget != null)) &&
+                () => (Warlock.curseVictim == null && Warlock.currentTarget != null ||
+                       Warlock.curseVictim != null && Warlock.curseVictimTarget != null) &&
                       PlayerControl.LocalPlayer.CanMove,
                 () =>
                 {
@@ -898,6 +801,134 @@ namespace Modpack
                 KeyCode.F
             );
 
+            // Security Guard button
+            securityGuardButton = new CustomButton(
+                () =>
+                {
+                    if (SecurityGuard.ventTarget != null)
+                    {
+                        // Seal vent
+                        var writer = AmongUsClient.Instance.StartRpc(PlayerControl.LocalPlayer.NetId,
+                            (byte) CustomRPC.SealVent, SendOption.Reliable);
+                        writer.WritePacked(SecurityGuard.ventTarget.Id);
+                        writer.EndMessage();
+                        RPCProcedure.sealVent(SecurityGuard.ventTarget.Id);
+                        SecurityGuard.ventTarget = null;
+                    }
+                    else if (PlayerControl.GameOptions.MapId != 1)
+                    {
+                        // Place camera if there's no vent and it's not MiraHQ
+                        var pos = PlayerControl.LocalPlayer.transform.position;
+                        var buff = new byte[sizeof(float) * 2];
+                        Buffer.BlockCopy(BitConverter.GetBytes(pos.x), 0, buff, 0 * sizeof(float), sizeof(float));
+                        Buffer.BlockCopy(BitConverter.GetBytes(pos.y), 0, buff, 1 * sizeof(float), sizeof(float));
+
+                        var writer = AmongUsClient.Instance.StartRpc(PlayerControl.LocalPlayer.NetId,
+                            (byte) CustomRPC.PlaceCamera, SendOption.Reliable);
+                        writer.WriteBytesAndSize(buff);
+                        writer.EndMessage();
+                        RPCProcedure.placeCamera(buff);
+                    }
+
+                    securityGuardButton.Timer = securityGuardButton.MaxTimer;
+                },
+                () => SecurityGuard.securityGuard != null && SecurityGuard.securityGuard == PlayerControl.LocalPlayer &&
+                      !PlayerControl.LocalPlayer.Data.IsDead && SecurityGuard.remainingScrews >=
+                      Mathf.Min(SecurityGuard.ventPrice, SecurityGuard.camPrice),
+                () =>
+                {
+                    securityGuardButton.killButtonManager.renderer.sprite =
+                        SecurityGuard.ventTarget == null && PlayerControl.GameOptions.MapId != 1
+                            ? SecurityGuard.getPlaceCameraButtonSprite()
+                            : SecurityGuard.getCloseVentButtonSprite();
+                    if (securityGuardButtonScrewsText != null)
+                        securityGuardButtonScrewsText.text =
+                            $"{SecurityGuard.remainingScrews}/{SecurityGuard.totalScrews}";
+
+                    if (SecurityGuard.ventTarget != null)
+                        return SecurityGuard.remainingScrews >= SecurityGuard.ventPrice &&
+                               PlayerControl.LocalPlayer.CanMove;
+                    return PlayerControl.GameOptions.MapId != 1 &&
+                           SecurityGuard.remainingScrews >= SecurityGuard.camPrice && PlayerControl.LocalPlayer.CanMove;
+                },
+                () => { securityGuardButton.Timer = securityGuardButton.MaxTimer; },
+                SecurityGuard.getPlaceCameraButtonSprite(),
+                new Vector3(-1.3f, 0f, 0f),
+                __instance,
+                KeyCode.Q
+            );
+
+            // Security Guard button screws counter
+            securityGuardButtonScrewsText = Object.Instantiate(securityGuardButton.killButtonManager.TimerText,
+                securityGuardButton.killButtonManager.TimerText.transform.parent);
+            securityGuardButtonScrewsText.text = "";
+            securityGuardButtonScrewsText.enableWordWrapping = false;
+            securityGuardButtonScrewsText.transform.localScale = Vector3.one * 0.5f;
+            securityGuardButtonScrewsText.transform.localPosition += new Vector3(-0.05f, 0.7f, 0);
+
+            // Arsonist button
+            arsonistButton = new CustomButton(
+                () =>
+                {
+                    bool dousedEveryoneAlive = Arsonist.dousedEveryoneAlive();
+                    if (dousedEveryoneAlive)
+                    {
+                        var winWriter = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId,
+                            (byte) CustomRPC.ArsonistWin, SendOption.Reliable, -1);
+                        AmongUsClient.Instance.FinishRpcImmediately(winWriter);
+                        RPCProcedure.arsonistWin();
+                        arsonistButton.HasEffect = false;
+                    }
+                    else if (Arsonist.currentTarget != null)
+                    {
+                        Arsonist.douseTarget = Arsonist.currentTarget;
+                        arsonistButton.HasEffect = true;
+                    }
+                },
+                () => Arsonist.arsonist != null && Arsonist.arsonist == PlayerControl.LocalPlayer &&
+                      !PlayerControl.LocalPlayer.Data.IsDead,
+                () =>
+                {
+                    bool dousedEveryoneAlive = Arsonist.dousedEveryoneAlive();
+                    if (dousedEveryoneAlive)
+                        arsonistButton.killButtonManager.renderer.sprite = Arsonist.getIgniteSprite();
+
+                    if (!arsonistButton.isEffectActive || Arsonist.douseTarget == Arsonist.currentTarget)
+                        return PlayerControl.LocalPlayer.CanMove &&
+                               (dousedEveryoneAlive || Arsonist.currentTarget != null);
+                    Arsonist.douseTarget = null;
+                    arsonistButton.Timer = 0f;
+                    arsonistButton.isEffectActive = false;
+
+                    return PlayerControl.LocalPlayer.CanMove && (dousedEveryoneAlive || Arsonist.currentTarget != null);
+                },
+                () =>
+                {
+                    arsonistButton.Timer = arsonistButton.MaxTimer;
+                    arsonistButton.isEffectActive = false;
+                    Arsonist.douseTarget = null;
+                },
+                Arsonist.getDouseSprite(),
+                new Vector3(-1.3f, 0f, 0f),
+                __instance,
+                KeyCode.Q,
+                true,
+                Arsonist.duration,
+                () =>
+                {
+                    if (Arsonist.douseTarget != null) Arsonist.dousedPlayers.Add(Arsonist.douseTarget);
+                    Arsonist.douseTarget = null;
+                    arsonistButton.Timer = Arsonist.dousedEveryoneAlive() ? 0 : arsonistButton.MaxTimer;
+
+                    foreach (PlayerControl p in Arsonist.dousedPlayers)
+                    {
+                        if (Arsonist.dousedIcons.ContainsKey(p.PlayerId))
+                        {
+                            Arsonist.dousedIcons[p.PlayerId].setSemiTransparent(false);
+                        }
+                    }
+                }
+            );
 
             // Set the default (or settings from the previous game) timers/durations when spawning the buttons
             setCustomButtonCooldowns();

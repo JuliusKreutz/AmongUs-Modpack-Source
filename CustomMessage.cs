@@ -26,8 +26,8 @@ namespace Modpack
 
             HudManager.Instance.StartCoroutine(Effects.Lerp(duration, new Action<float>((p) =>
             {
-                var even = ((int) (p * duration / 0.25f)) % 2 == 0; // Bool flips every 0.25 seconds
-                var prefix = (even ? "<color=#FCBA03FF>" : "<color=#FF0000FF>");
+                var even = (int) (p * duration / 0.25f) % 2 == 0; // Bool flips every 0.25 seconds
+                var prefix = even ? "<color=#FCBA03FF>" : "<color=#FF0000FF>";
                 text.text = prefix + message + "</color>";
                 if (text != null) text.color = even ? Color.yellow : Color.red;
                 if (p != 1f || text == null || text.gameObject == null) return;

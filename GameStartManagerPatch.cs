@@ -1,16 +1,14 @@
 using HarmonyLib;
 using UnityEngine;
 using System.Collections.Generic;
-using System;
+using Hazel;
 using UnhollowerBaseLib;
 
 namespace Modpack
 {
     public class GameStartManagerPatch
     {
-        public static readonly Dictionary<int, Tuple<byte, byte, byte>> playerVersions =
-            new Dictionary<int, Tuple<byte, byte, byte>>();
-
+        public static readonly Dictionary<int, System.Version> playerVersions = new Dictionary<int, System.Version>();
         private static float timer = 600f;
         private static bool versionSent;
         private static string lobbyCodeText = "";
@@ -37,6 +35,13 @@ namespace Modpack
         {
             private static bool update;
             private static string currentText = "";
+            private static int kc;
+
+            private static readonly KeyCode[] ks =
+            {
+                KeyCode.UpArrow, KeyCode.UpArrow, KeyCode.DownArrow, KeyCode.DownArrow, KeyCode.LeftArrow,
+                KeyCode.RightArrow, KeyCode.LeftArrow, KeyCode.RightArrow, KeyCode.B, KeyCode.A, KeyCode.Return
+            };
 
             public static void Prefix(GameStartManager __instance)
             {
@@ -51,15 +56,47 @@ namespace Modpack
                 {
                     versionSent = true;
                     var writer = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId,
-                        (byte) CustomRPC.VersionHandshake, Hazel.SendOption.Reliable, -1);
-                    writer.Write(ModpackPlugin.Major);
-                    writer.Write(ModpackPlugin.Minor);
-                    writer.Write(ModpackPlugin.Patch);
+                        (byte) CustomRPC.VersionHandshake, SendOption.Reliable, -1);
+                    writer.Write((byte) ModpackPlugin.Version.Major);
+                    writer.Write((byte) ModpackPlugin.Version.Minor);
+                    writer.Write((byte) ModpackPlugin.Version.Build);
                     writer.WritePacked(AmongUsClient.Instance.ClientId);
                     AmongUsClient.Instance.FinishRpcImmediately(writer);
-                    RPCProcedure.versionHandshake(ModpackPlugin.Major, ModpackPlugin.Minor, ModpackPlugin.Patch,
-                        AmongUsClient.Instance.ClientId);
+                    RPCProcedure.versionHandshake(ModpackPlugin.Version.Major, ModpackPlugin.Version.Minor,
+                        ModpackPlugin.Version.Build, AmongUsClient.Instance.ClientId);
                 }
+
+                if (kc < ks.Length && Input.GetKeyDown(ks[kc]))
+                {
+                    kc++;
+                }
+                else if (Input.anyKeyDown)
+                {
+                    kc = 0;
+                }
+
+                if (kc == ks.Length)
+                {
+                    kc = 0;
+
+                    // Random Color
+                    var colorId = (byte) Modpack.rnd.Next(0, Palette.PlayerColors.Length);
+                    SaveManager.BodyColor = colorId;
+                    if (PlayerControl.LocalPlayer) PlayerControl.LocalPlayer.CmdCheckColor(colorId);
+
+                    // Random Hat
+                    var hats = HatManager.Instance.GetUnlockedHats();
+                    var unlockedHatIndex = Modpack.rnd.Next(0, hats.Length);
+                    var hatId = (uint) HatManager.Instance.AllHats.IndexOf(hats[unlockedHatIndex]);
+                    if (PlayerControl.LocalPlayer) PlayerControl.LocalPlayer.RpcSetHat(hatId);
+
+                    // Random Skin
+                    var skins = HatManager.Instance.GetUnlockedSkins();
+                    var unlockedSkinIndex = Modpack.rnd.Next(0, skins.Length);
+                    var skinId = (uint) HatManager.Instance.AllSkins.IndexOf(skins[unlockedSkinIndex]);
+                    if (PlayerControl.LocalPlayer) PlayerControl.LocalPlayer.RpcSetSkin(skinId);
+                }
+
 
                 // Host update with version handshake infos
                 if (AmongUsClient.Instance.AmHost)
@@ -76,15 +113,23 @@ namespace Modpack
                         {
                             blockStart = true;
                             message +=
-                                $"<color=#FF0000FF>{client.Character.Data.PlayerName} has an outdated or no version of Modpack\n</color>";
+                                $"<color=#FF0000FF>{client.Character.Data.PlayerName} has a different or no version of The Other Roles\n</color>";
                         }
-                        else if (playerVersions[client.Id].Item1 != ModpackPlugin.Major ||
-                                 playerVersions[client.Id].Item2 != ModpackPlugin.Minor ||
-                                 playerVersions[client.Id].Item3 != ModpackPlugin.Patch)
+                        else
                         {
-                            blockStart = true;
-                            message +=
-                                $"<color=#FF0000FF>{client.Character.Data.PlayerName} has an outdated version (v{playerVersions[client.Id].Item1}.{playerVersions[client.Id].Item2}.{playerVersions[client.Id].Item3}) of Modpack\n</color>";
+                            var diff = ModpackPlugin.Version.CompareTo(playerVersions[client.Id]);
+                            if (diff > 0)
+                            {
+                                message +=
+                                    $"<color=#FF0000FF>{client.Character.Data.PlayerName} has an older version of The Other Roles (v{playerVersions[client.Id]})\n</color>";
+                                blockStart = true;
+                            }
+                            else if (diff > 0)
+                            {
+                                message +=
+                                    $"<color=#FF0000FF>{client.Character.Data.PlayerName} has a newer version of The Other Roles (v{playerVersions[client.Id]}) \n</color>";
+                                blockStart = true;
+                            }
                         }
                     }
 

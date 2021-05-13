@@ -207,7 +207,7 @@ namespace Modpack
     {
         public static bool Prefix(KeyMinigame __instance)
         {
-            __instance.targetSlotId = (PlayerControl.LocalPlayer != null) ? PlayerControl.LocalPlayer.PlayerId % 10 : 0;
+            __instance.targetSlotId = PlayerControl.LocalPlayer != null ? PlayerControl.LocalPlayer.PlayerId % 10 : 0;
             __instance.Slots[__instance.targetSlotId].Image.sprite = __instance.Slots[__instance.targetSlotId].Highlit;
             return false;
         }

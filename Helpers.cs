@@ -4,6 +4,7 @@ using System.Reflection;
 using UnhollowerBaseLib;
 using UnityEngine;
 using System.Linq;
+using Hazel;
 using static Modpack.Modpack;
 
 namespace Modpack
@@ -37,7 +38,6 @@ namespace Modpack
                 var byteTexture = new byte[stream.Length];
                 stream.Read(byteTexture, 0, (int) stream.Length);
                 LoadImage(texture, byteTexture, false);
-
                 return texture;
             }
             catch
@@ -78,7 +78,7 @@ namespace Modpack
         public static void setSkinWithAnim(PlayerPhysics playerPhysics, uint SkinId)
         {
             SkinData nextSkin = DestroyableSingleton<HatManager>.Instance.AllSkins[(int) SkinId];
-            AnimationClip clip;
+            AnimationClip clip = null;
             var spriteAnim = playerPhysics.Skin.animator;
             var anim = spriteAnim.m_animator;
             var skinLayer = playerPhysics.Skin;
@@ -105,32 +105,31 @@ namespace Modpack
             if (Medic.shielded != null && Medic.shielded == target)
             {
                 var writer = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId,
-                    (byte) CustomRPC.ShieldedMurderAttempt, Hazel.SendOption.Reliable, -1);
+                    (byte) CustomRPC.ShieldedMurderAttempt, SendOption.Reliable, -1);
                 AmongUsClient.Instance.FinishRpcImmediately(writer);
                 RPCProcedure.shieldedMurderAttempt();
 
                 return false;
             }
             // Block impostor not fully grown child kill
-            else
+            else if (Child.child != null && target == Child.child && !Child.isGrownUp())
             {
-                if (Child.child != null && target == Child.child && !Child.isGrownUp())
-                {
-                    return false;
-                }
-                // Block Time Master with time shield kill
-
-                if (!TimeMaster.shieldActive || TimeMaster.timeMaster == null || TimeMaster.timeMaster != target)
-                    return true;
+                return false;
+            }
+            // Block Time Master with time shield kill
+            else if (TimeMaster.shieldActive && TimeMaster.timeMaster != null && TimeMaster.timeMaster == target)
+            {
                 if (isMeetingStart) return false;
                 // Only rewind the attempt was not called because a meeting startet 
                 var writer = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId,
-                    (byte) CustomRPC.TimeMasterRewindTime, Hazel.SendOption.Reliable, -1);
+                    (byte) CustomRPC.TimeMasterRewindTime, SendOption.Reliable, -1);
                 AmongUsClient.Instance.FinishRpcImmediately(writer);
                 RPCProcedure.timeMasterRewindTime();
 
                 return false;
             }
+
+            return true;
         }
 
 
@@ -194,11 +193,13 @@ namespace Modpack
 
         public static bool hasFakeTasks(this PlayerControl player)
         {
-            return (player == Jester.jester || player == Jackal.jackal || player == Sidekick.sidekick);
+            return (player == Jester.jester || player == Jackal.jackal || player == Sidekick.sidekick ||
+                    player == Arsonist.arsonist);
         }
 
         public static void clearAllTasks(this PlayerControl player)
         {
+            if (player == null) return;
             for (var i = 0; i < player.myTasks.Count; i++)
             {
                 PlayerTask playerTask = player.myTasks[i];
@@ -207,6 +208,22 @@ namespace Modpack
             }
 
             player.myTasks.Clear();
+
+            if (player.Data is {Tasks: { }})
+                player.Data.Tasks.Clear();
+        }
+
+        public static void setSemiTransparent(this PoolablePlayer player, bool value)
+        {
+            var alpha = value ? 0.25f : 1f;
+            foreach (var r in player.gameObject.GetComponentsInChildren<SpriteRenderer>())
+            {
+                var color = r.color;
+                r.color = new Color(color.r, color.g, color.b, alpha);
+            }
+
+            player.NameText.color = new Color(player.NameText.color.r, player.NameText.color.g, player.NameText.color.b,
+                alpha);
         }
 
         public static string cs(Color c, string s)

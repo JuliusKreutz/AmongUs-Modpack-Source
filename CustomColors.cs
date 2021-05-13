@@ -7,11 +7,11 @@ using Assets.CoreScripts;
 
 namespace Modpack
 {
-    public static class CustomColors
+    public class CustomColors
     {
-        private static readonly Dictionary<int, string> ColorStrings = new Dictionary<int, string>();
+        protected static readonly Dictionary<int, string> ColorStrings = new Dictionary<int, string>();
         public static readonly List<int> lighterColors = new List<int>() {3, 4, 5, 7, 10, 11};
-        public static int pickableColors = 12;
+        public static uint pickableColors = 12;
 
         public static void Load()
         {
@@ -121,7 +121,7 @@ namespace Modpack
             };
 
 
-            pickableColors += colors.Count; // Colors to show in Tab
+            pickableColors += (uint) colors.Count; // Colors to show in Tab
             /* Hidden Colors */
             colors.Add(new CustomColor
             {
@@ -137,6 +137,37 @@ namespace Modpack
                 shadow = new Color32(24, 32, 116, 0),
                 isLighterColor = false
             });
+
+            /* Batch 2 */
+            colors.Add(new CustomColor
+            {
+                longname = "Electric", shortname = "ELEC",
+                color = new Color32(0xDB, 0xFD, 0x2F, 0),
+                shadow = new Color32(0x89, 0x9E, 0x1E, 0),
+                isLighterColor = true
+            });
+            colors.Add(new CustomColor
+            {
+                longname = "Signal Orange", shortname = "SIGN",
+                color = new Color32(0xF7, 0x44, 0x17, 0),
+                shadow = new Color32(0x9B, 0x2E, 0x0F, 0),
+                isLighterColor = true
+            });
+            colors.Add(new CustomColor
+            {
+                longname = "Navy Blue", shortname = "NAVY",
+                color = new Color32(0x35, 0x7B, 0x9E, 0),
+                shadow = new Color32(0x16, 0x2B, 0x62, 0),
+                isLighterColor = false
+            });
+            colors.Add(new CustomColor
+            {
+                longname = "Eisbison", shortname = "EIS",
+                color = new Color32(0xA8, 0xDF, 0xFF, 0),
+                shadow = new Color32(0x59, 0x9F, 0xC8, 0),
+                isLighterColor = true
+            });
+
             /* Add Colors */
             var id = 50000;
             foreach (var cc in colors)
@@ -209,6 +240,55 @@ namespace Modpack
                         if (i >= pickableColors)
                             chip.transform.localScale *= 0f; // Needs to exist for PlayerTab
                     }
+                }
+            }
+
+            [HarmonyPatch(typeof(SaveManager), nameof(SaveManager.LoadPlayerPrefs))]
+            private static class LoadPlayerPrefsPatch
+            {
+                // Fix Potential issues with broken colors
+                private static bool needsPatch;
+
+                public static void Prefix([HarmonyArgument(0)] bool overrideLoad)
+                {
+                    if (!SaveManager.loaded || overrideLoad)
+                        needsPatch = true;
+                }
+
+                public static void Postfix()
+                {
+                    if (!needsPatch) return;
+                    SaveManager.colorConfig %= pickableColors;
+                    needsPatch = false;
+                }
+            }
+
+            [HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.CheckColor))]
+            private static class PlayerControlCheckColorPatch
+            {
+                private static bool isTaken(PlayerControl player, uint color)
+                {
+                    foreach (var p in GameData.Instance.AllPlayers)
+                        if (!p.Disconnected && p.PlayerId != player.PlayerId && p.ColorId == color)
+                            return true;
+                    return false;
+                }
+
+                public static bool Prefix(PlayerControl __instance, [HarmonyArgument(0)] byte bodyColor)
+                {
+                    // Fix incorrect color assignment
+                    var color = (uint) bodyColor;
+                    if (isTaken(__instance, color) || color >= Palette.PlayerColors.Length)
+                    {
+                        var num = 0;
+                        while (num++ < 50 && (color >= pickableColors || isTaken(__instance, color)))
+                        {
+                            color = (color + 1) % pickableColors;
+                        }
+                    }
+
+                    __instance.RpcSetColor((byte) color);
+                    return false;
                 }
             }
         }

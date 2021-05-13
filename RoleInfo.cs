@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Collections.Generic;
 using static Modpack.Modpack;
 using UnityEngine;
@@ -223,7 +224,9 @@ namespace Modpack
                     "Finish your tasks"));
             }
 
-            if (Jackal.jackal != null && p == Jackal.jackal)
+            if ((Jackal.jackal != null && p == Jackal.jackal) || (Jackal.formerJackals != null &&
+                                                                  Jackal.formerJackals.Any(
+                                                                      x => x.PlayerId == p.PlayerId)))
             {
                 infos.Add(new RoleInfo("Jackal",
                     Jackal.color,
@@ -255,20 +258,37 @@ namespace Modpack
                     "Confuse the Impostors"));
             }
 
-            switch (infos.Count)
+            if (SecurityGuard.securityGuard != null && p == SecurityGuard.securityGuard)
             {
-                case 0 when p.Data.IsImpostor: // Just Impostor
-                    infos.Add(new RoleInfo("Impostor",
-                        Palette.ImpostorRed,
-                        "",
-                        "Sabotage and kill everyone"));
-                    break;
-                case 0: // Just Crewmate
-                    infos.Add(new RoleInfo("Crewmate",
-                        Color.white,
-                        "",
-                        "Find the Impostors"));
-                    break;
+                infos.Add(new RoleInfo("Security Guard",
+                    SecurityGuard.color,
+                    "Seal vents and place cameras",
+                    "Seal vents and place cameras"));
+            }
+
+            if (Arsonist.arsonist != null && p == Arsonist.arsonist)
+            {
+                infos.Add(new RoleInfo("Arsonist",
+                    Arsonist.color,
+                    "Let them burn",
+                    "Let them burn"));
+            }
+
+            if (infos.Count == 0 && p.Data.IsImpostor)
+            {
+                // Just Impostor
+                infos.Add(new RoleInfo("Impostor",
+                    Palette.ImpostorRed,
+                    "",
+                    "Sabotage and kill everyone"));
+            }
+            else if (infos.Count == 0)
+            {
+                // Just Crewmate
+                infos.Add(new RoleInfo("Crewmate",
+                    Color.white,
+                    "",
+                    "Find the Impostors"));
             }
 
             return infos;

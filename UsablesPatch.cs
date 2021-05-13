@@ -21,7 +21,6 @@ namespace Modpack
 
 
             var roleCouldUse = false;
-
             if (Engineer.engineer != null && Engineer.engineer == @object)
                 roleCouldUse = true;
             else if (Jackal.canUseVents && Jackal.jackal != null && Jackal.jackal == @object)
@@ -30,15 +29,15 @@ namespace Modpack
                 roleCouldUse = true;
             else if (pc.IsImpostor)
             {
-                if (Janitor.janitor == null || Janitor.janitor != PlayerControl.LocalPlayer)
-                {
-                    if (Morphling.morphling == null || Morphling.morphling != @object)
-                    {
-                        if (Mafioso.mafioso == null || Mafioso.mafioso != PlayerControl.LocalPlayer ||
-                            Godfather.godfather == null || Godfather.godfather.Data.IsDead)
-                            roleCouldUse = true;
-                    }
-                }
+                if (Janitor.janitor != null && Janitor.janitor == PlayerControl.LocalPlayer)
+                    roleCouldUse = false;
+                else if (Morphling.morphling != null && Morphling.morphling == PlayerControl.LocalPlayer)
+                    roleCouldUse = false;
+                else if (Mafioso.mafioso != null && Mafioso.mafioso == PlayerControl.LocalPlayer &&
+                         Godfather.godfather != null && !Godfather.godfather.Data.IsDead)
+                    roleCouldUse = false;
+                else
+                    roleCouldUse = true;
             }
 
             var usableDistance = __instance.UsableDistance;
@@ -52,12 +51,20 @@ namespace Modpack
                     __result = num;
                     return false;
                 }
-
-                // Reduce the usable distance to reduce the risk of gettings stuck while trying to jump into the box if it's placed near objects
-                usableDistance = 0.4f;
+                else
+                {
+                    // Reduce the usable distance to reduce the risk of gettings stuck while trying to jump into the box if it's placed near objects
+                    usableDistance = 0.4f;
+                }
+            }
+            else if (__instance.name.StartsWith("SealedVent_"))
+            {
+                canUse = couldUse = false;
+                __result = num;
+                return false;
             }
 
-            couldUse = ((@object.inVent || roleCouldUse) && !pc.IsDead && (@object.CanMove || @object.inVent));
+            couldUse = (@object.inVent || roleCouldUse) && !pc.IsDead && (@object.CanMove || @object.inVent);
             canUse = couldUse;
             if (canUse)
             {
@@ -206,7 +213,6 @@ namespace Modpack
         }
     }
 
-
     [HarmonyPatch(typeof(TuneRadioMinigame), nameof(TuneRadioMinigame.Begin))]
     internal class CommsMinigameBeginPatch
     {
@@ -272,8 +278,7 @@ namespace Modpack
 
                 // Hacker update
                 if (!vitalsPanel.IsDead) continue;
-                var deadPlayer = deadPlayers?.Where(x => x.player?.PlayerId == player?.PlayerId)
-                    .FirstOrDefault();
+                var deadPlayer = deadPlayers?.Where(x => x.player?.PlayerId == player?.PlayerId).FirstOrDefault();
                 if (deadPlayer?.timeOfDeath == null) continue;
                 var timeSinceDeath = ((float) (DateTime.UtcNow - deadPlayer.timeOfDeath).TotalMilliseconds);
 
@@ -281,7 +286,7 @@ namespace Modpack
                     vitalsPanel.Text.text = Math.Round(timeSinceDeath / 1000) + "s";
                 else if (__instance.vitals.Length > 10)
                     vitalsPanel.Text.text = player.PlayerName.Length >= 4
-                        ? player.PlayerName.Substring(0, 4).ToUpper()
+                        ? player.PlayerName[..4].ToUpper()
                         : player.PlayerName.ToUpper();
                 else
                     vitalsPanel.Text.text =
@@ -297,6 +302,8 @@ namespace Modpack
     {
         private static Dictionary<SystemTypes, List<Color>> players = new Dictionary<SystemTypes, List<Color>>();
         private static readonly int BodyColor = Shader.PropertyToID("_BodyColor");
+        private static readonly int BackColor = Shader.PropertyToID("_BackColor");
+        private static readonly int VisorColor = Shader.PropertyToID("_VisorColor");
 
         [HarmonyPatch(typeof(MapCountOverlay), nameof(MapCountOverlay.Update))]
         private class MapCountOverlayUpdatePatch
@@ -374,8 +381,7 @@ namespace Modpack
                                 {
                                     var component = collider2D.GetComponent<DeadBody>();
                                     if (!component) continue;
-                                    var playerInfo =
-                                        GameData.Instance.GetPlayerById(component.ParentId);
+                                    var playerInfo = GameData.Instance.GetPlayerById(component.ParentId);
                                     if (playerInfo == null) continue;
                                     var color = Palette.PlayerColors[playerInfo.ColorId];
                                     if (Hacker.onlyColorType)
@@ -406,7 +412,8 @@ namespace Modpack
         [HarmonyPatch(typeof(CounterArea), nameof(CounterArea.UpdateCount))]
         private class CounterAreaUpdateCountPatch
         {
-            private static Sprite defaultIcon;
+            private static Material defaultMat;
+            private static Material newMat;
 
             private static void Postfix(CounterArea __instance)
             {
@@ -422,18 +429,118 @@ namespace Modpack
                     var renderer = icon.GetComponent<SpriteRenderer>();
 
                     if (renderer == null) continue;
-                    if (defaultIcon == null) defaultIcon = renderer.sprite;
-                    if (showHackerInfo && colors.Count > i && Hacker.getAdminTableIconSprite() != null)
+                    if (defaultMat == null) defaultMat = renderer.material;
+                    if (newMat == null) newMat = UnityEngine.Object.Instantiate(defaultMat);
+                    if (showHackerInfo && colors.Count > i)
                     {
-                        renderer.sprite = Hacker.getAdminTableIconSprite();
-                        renderer.color = colors[i];
+                        renderer.material = newMat;
+                        var color = colors[i];
+                        renderer.material.SetColor(BodyColor, color);
+                        var id = Palette.PlayerColors.IndexOf(color);
+                        if (id < 0)
+                        {
+                            renderer.material.SetColor(BackColor, color);
+                        }
+                        else
+                        {
+                            renderer.material.SetColor(BackColor, Palette.ShadowColors[id]);
+                        }
+
+                        renderer.material.SetColor(VisorColor, Palette.VisorColor);
                     }
                     else
                     {
-                        renderer.sprite = defaultIcon;
-                        renderer.color = Color.white;
+                        renderer.material = defaultMat;
                     }
                 }
+            }
+        }
+    }
+
+    [HarmonyPatch]
+    internal class SurveillanceMinigamePatch
+    {
+        private static int page;
+        private static float timer;
+        private static readonly int MainTex = Shader.PropertyToID("_MainTex");
+
+        [HarmonyPatch(typeof(SurveillanceMinigame), nameof(SurveillanceMinigame.Begin))]
+        private class SurveillanceMinigameBeginPatch
+        {
+            public static void Postfix(SurveillanceMinigame __instance)
+            {
+                // Add securityGuard cameras
+                page = 0;
+                timer = 0;
+                if (ShipStatus.Instance.AllCameras.Length <= 4 || __instance.FilteredRooms.Length <= 0) return;
+                __instance.textures = __instance.textures.ToList()
+                    .Concat(new RenderTexture[ShipStatus.Instance.AllCameras.Length - 4]).ToArray();
+                for (var i = 4; i < ShipStatus.Instance.AllCameras.Length; i++)
+                {
+                    var surv = ShipStatus.Instance.AllCameras[i];
+                    var camera = UnityEngine.Object.Instantiate(__instance.CameraPrefab, __instance.transform, true);
+                    var transform = surv.transform;
+                    var position = transform.position;
+                    camera.transform.position =
+                        new Vector3(position.x, position.y, 8f);
+                    camera.orthographicSize = 2.35f;
+                    var temporary = RenderTexture.GetTemporary(256, 256, 16, 0);
+                    __instance.textures[i] = temporary;
+                    camera.targetTexture = temporary;
+                }
+            }
+        }
+
+        [HarmonyPatch(typeof(SurveillanceMinigame), nameof(SurveillanceMinigame.Update))]
+        private class SurveillanceMinigameUpdatePatch
+        {
+            public static bool Prefix(SurveillanceMinigame __instance)
+            {
+                // Update normal and securityGuard cameras
+                timer += Time.deltaTime;
+                var numberOfPages = Mathf.CeilToInt(ShipStatus.Instance.AllCameras.Length / 4f);
+
+                var update = false;
+
+                if (timer > 3f || Input.GetKeyDown(KeyCode.RightArrow))
+                {
+                    update = true;
+                    timer = 0f;
+                    page = (page + 1) % numberOfPages;
+                }
+                else if (Input.GetKeyDown(KeyCode.LeftArrow))
+                {
+                    page = (page + numberOfPages - 1) % numberOfPages;
+                    update = true;
+                    timer = 0f;
+                }
+
+                if ((__instance.isStatic || update) &&
+                    !PlayerTask.PlayerHasTaskOfType<IHudOverrideTask>(PlayerControl.LocalPlayer))
+                {
+                    __instance.isStatic = false;
+                    for (var i = 0; i < __instance.ViewPorts.Length; i++)
+                    {
+                        __instance.ViewPorts[i].sharedMaterial = __instance.DefaultMaterial;
+                        __instance.SabText[i].gameObject.SetActive(false);
+                        if (page * 4 + i < __instance.textures.Length)
+                            __instance.ViewPorts[i].material.SetTexture(MainTex, __instance.textures[page * 4 + i]);
+                        else
+                            __instance.ViewPorts[i].sharedMaterial = __instance.StaticMaterial;
+                    }
+                }
+                else if (!__instance.isStatic &&
+                         PlayerTask.PlayerHasTaskOfType<HudOverrideTask>(PlayerControl.LocalPlayer))
+                {
+                    __instance.isStatic = true;
+                    for (var j = 0; j < __instance.ViewPorts.Length; j++)
+                    {
+                        __instance.ViewPorts[j].sharedMaterial = __instance.StaticMaterial;
+                        __instance.SabText[j].gameObject.SetActive(true);
+                    }
+                }
+
+                return false;
             }
         }
     }

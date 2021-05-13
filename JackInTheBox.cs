@@ -18,8 +18,8 @@ namespace Modpack
             index = Mathf.Clamp(index, 0, boxAnimationSprites.Length - 1);
             if (boxAnimationSprites[index] == null)
                 boxAnimationSprites[index] =
-                    (Helpers.loadSpriteFromResources(
-                        $"Modpack.Resources.TricksterAnimation.trickster_box_00{(index + 1):00}.png", 175f));
+                    Helpers.loadSpriteFromResources(
+                        $"Modpack.Resources.TricksterAnimation.trickster_box_00{index + 1:00}.png", 175f);
             return boxAnimationSprites[index];
         }
 
@@ -108,7 +108,7 @@ namespace Modpack
 
         public static bool hasJackInTheBoxLimitReached()
         {
-            return (AllJackInTheBoxes.Count >= JackInTheBoxLimit);
+            return AllJackInTheBoxes.Count >= JackInTheBoxLimit;
         }
 
         private static void connectVents()

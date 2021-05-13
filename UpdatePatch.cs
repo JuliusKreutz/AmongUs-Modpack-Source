@@ -22,9 +22,8 @@ namespace Modpack
             if ((source == Lovers.lover1 || source == Lovers.lover2) &&
                 (target == Lovers.lover1 || target == Lovers.lover2))
                 return false; // Members of team Lovers see the names of each other
-            return source != Jackal.jackal && source != Sidekick.sidekick || target != Jackal.jackal &&
-                target != Sidekick.sidekick &&
-                target != Jackal.fakeSidekick;
+            return (source != Jackal.jackal && source != Sidekick.sidekick) || (target != Jackal.jackal &&
+                target != Sidekick.sidekick && target != Jackal.fakeSidekick);
         }
 
         private static void resetNameTagsAndColors()
@@ -145,6 +144,14 @@ namespace Modpack
             {
                 setPlayerNameColor(Spy.spy, Spy.color);
             }
+            else if (SecurityGuard.securityGuard != null && SecurityGuard.securityGuard == PlayerControl.LocalPlayer)
+            {
+                setPlayerNameColor(SecurityGuard.securityGuard, SecurityGuard.color);
+            }
+            else if (Arsonist.arsonist != null && Arsonist.arsonist == PlayerControl.LocalPlayer)
+            {
+                setPlayerNameColor(Arsonist.arsonist, Arsonist.color);
+            }
 
             // No else if here, as a Lover of team Jackal needs the colors
             if (Sidekick.sidekick != null && Sidekick.sidekick == PlayerControl.LocalPlayer)
@@ -164,7 +171,7 @@ namespace Modpack
             }
 
             // Crewmate roles with no changes: Child
-            // Impostor roles with no changes: Morphling, Camouflager, Vampire, Godfather, Eraser, Janitor and Mafioso
+            // Impostor roles with no changes: Morphling, Camouflager, Vampire, Godfather, Eraser, Janitor, Cleaner, Warlock and Mafioso
         }
 
         private static void setMafiaNameTags()
@@ -281,8 +288,8 @@ namespace Modpack
 
                     if (!spawnPet) continue;
                     p.CurrentPet =
-                        UnityEngine.Object.Instantiate<PetBehaviour>(DestroyableSingleton<HatManager>.Instance
-                            .AllPets[0]);
+                        UnityEngine.Object.Instantiate<PetBehaviour>(
+                            DestroyableSingleton<HatManager>.Instance.AllPets[0]);
                     p.CurrentPet.transform.position = p.transform.position;
                     p.CurrentPet.Source = p;
                 }

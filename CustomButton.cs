@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Modpack
 {
@@ -26,9 +27,8 @@ namespace Modpack
         private static readonly int Desat = Shader.PropertyToID("_Desat");
 
         public CustomButton(Action OnClick, Func<bool> HasButton, Func<bool> CouldUse, Action OnMeetingEnds,
-            Sprite Sprite,
-            Vector3 PositionOffset, HudManager hudManager, KeyCode? hotkey, bool HasEffect, float EffectDuration,
-            Action OnEffectEnds, bool mirror = false)
+            Sprite Sprite, Vector3 PositionOffset, HudManager hudManager, KeyCode? hotkey, bool HasEffect,
+            float EffectDuration, Action OnEffectEnds, bool mirror = false)
         {
             this.hudManager = hudManager;
             this.OnClick = OnClick;
@@ -46,15 +46,14 @@ namespace Modpack
             buttons.Add(this);
             killButtonManager = UnityEngine.Object.Instantiate(hudManager.KillButton, hudManager.transform);
             var button = killButtonManager.GetComponent<PassiveButton>();
-            button.OnClick.RemoveAllListeners();
+            button.OnClick = new Button.ButtonClickedEvent();
             button.OnClick.AddListener((UnityEngine.Events.UnityAction) onClickEvent);
 
             setActive(false);
         }
 
         public CustomButton(Action OnClick, Func<bool> HasButton, Func<bool> CouldUse, Action OnMeetingEnds,
-            Sprite Sprite,
-            Vector3 PositionOffset, HudManager hudManager, KeyCode? hotkey, bool mirror = false)
+            Sprite Sprite, Vector3 PositionOffset, HudManager hudManager, KeyCode? hotkey, bool mirror = false)
             : this(OnClick, HasButton, CouldUse, OnMeetingEnds, Sprite, PositionOffset, hudManager, hotkey, false, 0f,
                 () => { }, mirror)
         {

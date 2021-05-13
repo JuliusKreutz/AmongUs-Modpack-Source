@@ -20,6 +20,34 @@ namespace Modpack
         {
             new HatData
             {
+                name = "glitch", bounce = false, highUp = false, offset = new Vector2(0f, 0.1f)
+            },
+            new HatData
+            {
+                name = "firegod", bounce = false, highUp = false, offset = new Vector2(0f, 0.1f)
+            },
+            new HatData
+            {
+                name = "dad", bounce = false, highUp = false, offset = new Vector2(-0.1f, 0.4f)
+            },
+            new HatData
+            {
+                name = "mama", bounce = false, highUp = false, offset = new Vector2(-0.1f, 0.4f)
+            },
+            new HatData
+            {
+                name = "pinkee", bounce = false, highUp = false, offset = new Vector2(-0.1f, 0.4f)
+            },
+            new HatData
+            {
+                name = "racoon", bounce = false, highUp = false, offset = new Vector2(-0.1f, 0.4f)
+            },
+            new HatData
+            {
+                name = "raflp", bounce = true, highUp = true, offset = new Vector2(-0.1f, 0.1f)
+            },
+            new HatData
+            {
                 name = "aphex", bounce = false, highUp = false, offset = new Vector2(-0.1f, 0.2f)
             },
             new HatData

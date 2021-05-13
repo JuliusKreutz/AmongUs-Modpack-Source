@@ -23,7 +23,7 @@ namespace Modpack
         {
             private static byte[] calculateVotes(MeetingHud __instance)
             {
-                var array = new byte[__instance.playerStates.Length + 1];
+                var array = new byte[16];
                 foreach (var playerVoteArea in __instance.playerStates)
                 {
                     if (!playerVoteArea.didVote) continue;
@@ -52,16 +52,15 @@ namespace Modpack
                 var tmp = array[swapped1.TargetPlayerId + 1];
                 array[swapped1.TargetPlayerId + 1] = array[swapped2.TargetPlayerId + 1];
                 array[swapped2.TargetPlayerId + 1] = tmp;
-
                 return array;
             }
 
-            private static int IndexOfMax(IReadOnlyList<byte> self, Func<byte, int> comparer, out bool tie)
+            private static int IndexOfMax(byte[] self, Func<byte, int> comparer, out bool tie)
             {
                 tie = false;
                 var num = int.MinValue;
                 var result = -1;
-                for (var i = 0; i < self.Count; i++)
+                for (var i = 0; i < self.Length; i++)
                 {
                     var num2 = comparer(self[i]);
                     if (num2 > num)
@@ -103,7 +102,7 @@ namespace Modpack
                     break;
                 }
 
-                var array = new byte[__instance.playerStates.Length];
+                var array = new byte[15];
                 foreach (var playerVoteArea in __instance.playerStates)
                 {
                     array[playerVoteArea.TargetPlayerId] = playerVoteArea.GetState();
@@ -117,7 +116,6 @@ namespace Modpack
                 messageWriter.Write(exiled?.PlayerId ?? byte.MaxValue);
                 messageWriter.Write(tie);
                 messageWriter.EndMessage();
-
                 return false;
             }
         }
@@ -125,7 +123,7 @@ namespace Modpack
         [HarmonyPatch(typeof(MeetingHud), nameof(MeetingHud.PopulateResults))]
         private class MeetingPopulateVotesPatch
         {
-            private static bool Prefix(MeetingHud __instance, [HarmonyArgument(0)] Il2CppStructArray<byte> states)
+            private static bool Prefix(MeetingHud __instance, [HarmonyArgument(0)] IList<byte> states)
             {
                 // Swapper swap votes
                 PlayerVoteArea swapped1 = null;
@@ -142,11 +140,11 @@ namespace Modpack
                 if (doSwap)
                 {
                     delay = 2f;
-                    var transform = swapped1.transform;
-                    __instance.StartCoroutine(Effects.Slide3D(transform, transform.localPosition,
-                        swapped2.transform.localPosition, 2f));
-                    var transform1 = swapped2.transform;
+                    var transform1 = swapped1.transform;
                     __instance.StartCoroutine(Effects.Slide3D(transform1, transform1.localPosition,
+                        swapped2.transform.localPosition, 2f));
+                    var transform = swapped2.transform;
+                    __instance.StartCoroutine(Effects.Slide3D(transform, transform.localPosition,
                         swapped1.transform.localPosition, 2f));
                 }
 
@@ -193,23 +191,20 @@ namespace Modpack
 
                             var transform = spriteRenderer.transform;
                             transform.localPosition = __instance.CounterOrigin +
-                                                      new Vector3(
-                                                          votesXOffset +
-                                                          __instance.CounterOffsets.x * num2, 0f,
+                                                      new Vector3(votesXOffset + __instance.CounterOffsets.x * num2, 0f,
                                                           0f);
                             transform.localScale = Vector3.zero;
                             Transform transform1;
                             (transform1 = spriteRenderer.transform).SetParent(playerVoteArea.transform
                                 .parent); // Reparent votes so they don't move with their playerVoteArea
-                            __instance.StartCoroutine(Effects.Bloop(num2 * 0.5f + delay, transform1,
-                                votesFinalSize, 0.5f));
+                            __instance.StartCoroutine(Effects.Bloop(num2 * 0.5f + delay, transform1, votesFinalSize,
+                                0.5f));
                             num2++;
                         }
                         else if (i == 0 && votedFor == -1)
                         {
                             var spriteRenderer2 = UnityEngine.Object.Instantiate(__instance.PlayerVotePrefab,
-                                playerVoteArea.transform
-                                    .parent, true);
+                                __instance.SkippedVoting.transform, true);
                             if (PlayerControl.GameOptions.AnonymousVotes)
                             {
                                 PlayerControl.SetPlayerMaterialColors(Palette.DisabledGrey, spriteRenderer2);
@@ -219,18 +214,16 @@ namespace Modpack
                                 PlayerControl.SetPlayerMaterialColors(playerById.ColorId, spriteRenderer2);
                             }
 
-                            Transform transform;
-                            Transform transform1;
-                            (transform = (transform1 = spriteRenderer2.transform)).SetParent(__instance.SkippedVoting
-                                .transform);
+                            var transform = spriteRenderer2.transform;
                             transform.localPosition = __instance.CounterOrigin +
-                                                      new Vector3(
-                                                          votesXOffset +
-                                                          __instance.CounterOffsets.x * num, 0f,
+                                                      new Vector3(votesXOffset + __instance.CounterOffsets.x * num, 0f,
                                                           0f);
                             transform.localScale = Vector3.zero;
-                            __instance.StartCoroutine(Effects.Bloop(num * 0.5f + delay, transform1,
-                                votesFinalSize, 0.5f));
+                            Transform transform1;
+                            (transform1 = spriteRenderer2.transform).SetParent(playerVoteArea.transform
+                                .parent); // Reparent votes so they don't move with their playerVoteArea
+                            __instance.StartCoroutine(Effects.Bloop(num * 0.5f + delay, transform1, votesFinalSize,
+                                0.5f));
                             num++;
                         }
 
@@ -253,8 +246,8 @@ namespace Modpack
                 [HarmonyArgument(1)] GameData.PlayerInfo exiled, [HarmonyArgument(2)] bool tie)
             {
                 // Reset swapper values
-                Swapper.playerId1 = Byte.MaxValue;
-                Swapper.playerId2 = Byte.MaxValue;
+                Swapper.playerId1 = byte.MaxValue;
+                Swapper.playerId2 = byte.MaxValue;
 
                 // Lovers save next to be exiled, because RPC of ending game comes before RPC of exiled
                 Lovers.notAckedExiledIsLover = false;
@@ -379,6 +372,7 @@ namespace Modpack
                     button.OnClick.AddListener(
                         (UnityEngine.Events.UnityAction) (() => onClick(copiedIndex, __instance)));
 
+
                     selections[i] = false;
                     renderers[i] = renderer;
                 }
@@ -432,6 +426,43 @@ namespace Modpack
                     __instance.SkipVoteButton.gameObject.SetActive(false);
             }
         }
+
+        [HarmonyPatch(typeof(MeetingHud), nameof(MeetingHud.CastVote))]
+        private class MeetingHudCastVotePatch
+        {
+            private static void Postfix([HarmonyArgument(0)] byte srcPlayerId,
+                [HarmonyArgument(1)] sbyte suspectPlayerId)
+            {
+                var source = Helpers.playerById(srcPlayerId);
+                if (source == null || source.Data == null || !AmongUsClient.Instance.AmHost ||
+                    !ModpackPlugin.HostSeesVotesLog.Value) return;
+                string target = null;
+                switch (suspectPlayerId)
+                {
+                    case -2:
+                        target = "didn't vote";
+                        break;
+                    case -1:
+                        target = "skipped";
+                        break;
+                    default:
+                    {
+                        if (suspectPlayerId >= 0)
+                        {
+                            System.Console.WriteLine(suspectPlayerId);
+                            System.Console.WriteLine((byte) suspectPlayerId);
+                            var targetPlayer = Helpers.playerById((byte) suspectPlayerId);
+                            if (targetPlayer != null && targetPlayer.Data != null)
+                                target = $"voted {targetPlayer.Data.PlayerName}";
+                        }
+
+                        break;
+                    }
+                }
+
+                if (target != null) System.Console.WriteLine($"{source.Data.PlayerName} {target}");
+            }
+        }
     }
 
     [HarmonyPatch(typeof(ExileController), "Begin")]
@@ -475,11 +506,37 @@ namespace Modpack
             {
                 JackInTheBox.convertToVents();
             }
+
+            // SecurityGuard vents and cameras
+            var allCameras = ShipStatus.Instance.AllCameras.ToList();
+            foreach (var survCamera in camerasToAdd)
+            {
+                survCamera.gameObject.SetActive(true);
+                survCamera.gameObject.GetComponent<SpriteRenderer>().color = Color.white;
+                allCameras.Add(survCamera);
+            }
+
+            ShipStatus.Instance.AllCameras = allCameras.ToArray();
+            camerasToAdd = new Il2CppSystem.Collections.Generic.List<SurvCamera>();
+
+            foreach (var vent in ventsToSeal)
+            {
+                var animator = vent.GetComponent<PowerTools.SpriteAnim>();
+                animator?.Stop();
+                vent.EnterVentAnim = vent.ExitVentAnim = null;
+                vent.myRend.sprite = animator == null
+                    ? SecurityGuard.getStaticVentSealedSprite()
+                    : SecurityGuard.getAnimatedVentSealedSprite();
+                vent.myRend.color = Color.white;
+                vent.name = "SealedVent_" + vent.name;
+            }
+
+            ventsToSeal = new Il2CppSystem.Collections.Generic.List<Vent>();
         }
     }
 
 
-    [HarmonyPatch(typeof(UnityEngine.Object), nameof(UnityEngine.Object.Destroy), new[] {typeof(UnityEngine.Object)})]
+    [HarmonyPatch(typeof(UnityEngine.Object), nameof(UnityEngine.Object.Destroy), typeof(UnityEngine.Object))]
     internal class MeetingExiledEndPatch
     {
         private static void Prefix(UnityEngine.Object obj)
@@ -495,39 +552,65 @@ namespace Modpack
             }
 
             // Seer spawn souls
-            if (Seer.deadBodyPositions == null || Seer.seer == null || PlayerControl.LocalPlayer != Seer.seer ||
-                (Seer.mode != 0 && Seer.mode != 2)) return;
-            foreach (var pos in Seer.deadBodyPositions)
+            if (Seer.deadBodyPositions != null && Seer.seer != null && PlayerControl.LocalPlayer == Seer.seer &&
+                (Seer.mode == 0 || Seer.mode == 2))
             {
-                var soul = new GameObject();
-                soul.transform.position = pos;
-                soul.layer = 5;
-                var rend = soul.AddComponent<SpriteRenderer>();
-                rend.sprite = Seer.getSoulSprite();
-
-                if (Seer.limitSoulDuration)
+                foreach (var pos in Seer.deadBodyPositions)
                 {
-                    HudManager.Instance.StartCoroutine(Effects.Lerp(Seer.soulDuration, new Action<float>((p) =>
-                    {
-                        if (rend != null)
-                        {
-                            var tmp = rend.color;
-                            tmp.a = Mathf.Clamp01(1 - p);
-                            rend.color = tmp;
-                        }
+                    var soul = new GameObject();
+                    soul.transform.position = pos;
+                    soul.layer = 5;
+                    var rend = soul.AddComponent<SpriteRenderer>();
+                    rend.sprite = Seer.getSoulSprite();
 
-                        if (p == 1f && rend != null && rend.gameObject != null)
-                            UnityEngine.Object.Destroy(rend.gameObject);
-                    })));
+                    if (Seer.limitSoulDuration)
+                    {
+                        HudManager.Instance.StartCoroutine(Effects.Lerp(Seer.soulDuration, new Action<float>((p) =>
+                        {
+                            if (rend != null)
+                            {
+                                var tmp = rend.color;
+                                tmp.a = Mathf.Clamp01(1 - p);
+                                rend.color = tmp;
+                            }
+
+                            if (p == 1f && rend != null && rend.gameObject != null)
+                                UnityEngine.Object.Destroy(rend.gameObject);
+                        })));
+                    }
                 }
+
+                Seer.deadBodyPositions = new List<Vector3>();
             }
 
-            Seer.deadBodyPositions = new List<Vector3>();
+            // Arsonist deactivate dead poolable players
+            if (Arsonist.arsonist == null || Arsonist.arsonist != PlayerControl.LocalPlayer) return;
+            {
+                var visibleCounter = 0;
+                var transform = HudManager.Instance.UseButton.transform;
+                var localPosition = transform.localPosition;
+                var bottomLeft = new Vector3(-localPosition.x, localPosition.y, localPosition.z);
+                bottomLeft += new Vector3(-0.25f, -0.25f, 0);
+                foreach (var p in PlayerControl.AllPlayerControls)
+                {
+                    if (!Arsonist.dousedIcons.ContainsKey(p.PlayerId)) continue;
+                    if (p.Data.IsDead || p.Data.Disconnected)
+                    {
+                        Arsonist.dousedIcons[p.PlayerId].gameObject.SetActive(false);
+                    }
+                    else
+                    {
+                        Arsonist.dousedIcons[p.PlayerId].transform.localPosition =
+                            bottomLeft + Vector3.right * visibleCounter * 0.35f;
+                        visibleCounter++;
+                    }
+                }
+            }
         }
     }
 
-    [HarmonyPatch(typeof(TranslationController), nameof(TranslationController.GetString),
-        new[] {typeof(StringNames), typeof(Il2CppReferenceArray<Il2CppSystem.Object>)})]
+    [HarmonyPatch(typeof(TranslationController), nameof(TranslationController.GetString), typeof(StringNames),
+        typeof(Il2CppReferenceArray<Il2CppSystem.Object>))]
     internal class MeetingExiledTextPatch
     {
         private static void Postfix(ref string __result, [HarmonyArgument(0)] StringNames id,
@@ -576,8 +659,7 @@ namespace Modpack
                     else if (Lovers.lover2 != null &&
                              ExileController.Instance.exiled.Object.PlayerId == Lovers.lover2.PlayerId)
                         __result = ExileController.Instance.exiled.PlayerName + " was The Lover.";
-                    else if (Seer.seer != null &&
-                             ExileController.Instance.exiled.Object.PlayerId == Seer.seer.PlayerId)
+                    else if (Seer.seer != null && ExileController.Instance.exiled.Object.PlayerId == Seer.seer.PlayerId)
                         __result = ExileController.Instance.exiled.PlayerName + " was The Seer.";
                     else if (Hacker.hacker != null &&
                              ExileController.Instance.exiled.Object.PlayerId == Hacker.hacker.PlayerId)
@@ -599,6 +681,12 @@ namespace Modpack
                         __result = ExileController.Instance.exiled.PlayerName + " was The Sidekick.";
                     else if (Spy.spy != null && ExileController.Instance.exiled.Object.PlayerId == Spy.spy.PlayerId)
                         __result = ExileController.Instance.exiled.PlayerName + " was The Spy.";
+                    else if (SecurityGuard.securityGuard != null && ExileController.Instance.exiled.Object.PlayerId ==
+                        SecurityGuard.securityGuard.PlayerId)
+                        __result = ExileController.Instance.exiled.PlayerName + " was The Security Guard.";
+                    else if (Arsonist.arsonist != null &&
+                             ExileController.Instance.exiled.Object.PlayerId == Arsonist.arsonist.PlayerId)
+                        __result = ExileController.Instance.exiled.PlayerName + " was The Arsonist.";
                     else
                         __result = ExileController.Instance.exiled.PlayerName + " was not The Impostor.";
                     break;
