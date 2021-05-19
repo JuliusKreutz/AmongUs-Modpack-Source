@@ -21,6 +21,10 @@ namespace Modpack
         {
             new HatData
             {
+                name = "cloud",bounce = true, highUp = true, offset = new Vector2(-0.1f, 0.1f)
+            },
+            new HatData
+            {
                 name = "voku", offset = new Vector2(-0.1f, 0.4f)
             },
             new HatData
@@ -33,7 +37,7 @@ namespace Modpack
             },
             new HatData
             {
-                name = "cone", bounce = true, offset = new Vector2(-0.1f, 0f)
+                name = "cone", bounce = true, highUp = true, offset = new Vector2(-0.1f, 0f)
             },
             new HatData
             {
@@ -69,7 +73,7 @@ namespace Modpack
             },
             new HatData
             {
-                name = "spartan", bounce = true, adaptive = true, offset = new Vector2(-0.1f, 0.2f)
+                name = "spartan", bounce = true, highUp = true, adaptive = true, offset = new Vector2(-0.1f, 0.2f)
             },
             new HatData
             {
@@ -97,7 +101,7 @@ namespace Modpack
             },
             new HatData
             {
-                name = "pony", adaptive = true, offset = new Vector2(-0.1f, 0.1f)
+                name = "pony", highUp = true, adaptive = true, offset = new Vector2(-0.1f, 0.1f)
             },
             new HatData
             {
@@ -137,7 +141,7 @@ namespace Modpack
             },
             new HatData
             {
-                name = "megaphone", bounce = true, offset = new Vector2(0f, 0.1f)
+                name = "megaphone", bounce = true, highUp = true, offset = new Vector2(0f, 0.1f)
             },
             new HatData
             {
@@ -169,7 +173,7 @@ namespace Modpack
             },
             new HatData
             {
-                name = "horns", offset = new Vector2(-0.1f, 0.1f)
+                name = "horns", highUp = true, offset = new Vector2(-0.1f, 0.1f)
             },
             new HatData
             {
@@ -221,7 +225,7 @@ namespace Modpack
             },
             new HatData
             {
-                name = "katze", offset = new Vector2(-0.1f, 0.2f)
+                name = "katze", highUp = true, offset = new Vector2(-0.1f, 0.2f)
             },
             new HatData
             {
@@ -237,7 +241,7 @@ namespace Modpack
             },
             new HatData
             {
-                name = "duck", bounce = true, offset = new Vector2(-0.1f, 0.1f)
+                name = "duck", bounce = true, highUp = true, offset = new Vector2(-0.1f, 0.1f)
             },
             new HatData
             {
@@ -253,7 +257,7 @@ namespace Modpack
             },
             new HatData
             {
-                name = "dino", adaptive = true, offset = new Vector2(-0.1f, 0f)
+                name = "dino", adaptive = true, highUp = true, offset = new Vector2(-0.1f, 0f)
             },
             new HatData
             {
@@ -366,7 +370,7 @@ namespace Modpack
             },
             new HatData
             {
-                name = "pinkee", offset = new Vector2(-0.1f, 0.4f)
+                name = "pinkee", highUp = true, offset = new Vector2(-0.1f, 0.4f)
             },
             new HatData
             {
@@ -374,7 +378,7 @@ namespace Modpack
             },
             new HatData
             {
-                name = "raflp", bounce = true, highUp = true, offset = new Vector2(-0.1f, 0.1f)
+                name = "raflp", bounce = true, offset = new Vector2(-0.1f, 0.1f)
             },
             new HatData
             {
