@@ -21,343 +21,6 @@ namespace Modpack
         {
             new HatData
             {
-                name = "cloud",bounce = true, highUp = true, offset = new Vector2(-0.1f, 0.1f)
-            },
-            new HatData
-            {
-                name = "voku", offset = new Vector2(-0.1f, 0.4f)
-            },
-            new HatData
-            {
-                name = "tutu", offset = new Vector2(-0.1f, 0.5f)
-            },
-            new HatData
-            {
-                name = "trex", adaptive = true, offset = new Vector2(-0.1f, 0.4f)
-            },
-            new HatData
-            {
-                name = "cone", bounce = true, highUp = true, offset = new Vector2(-0.1f, 0f)
-            },
-            new HatData
-            {
-                name = "towel", bounce = true, adaptive = true, offset = new Vector2(-0.1f, 0.6f)
-            },
-            new HatData
-            {
-                name = "turban", adaptive = true, offset = new Vector2(-0.1f, 0.2f)
-            },
-            new HatData
-            {
-                name = "tinkercat", offset = new Vector2(-0.1f, 0.5f)
-            },
-            new HatData
-            {
-                name = "othercat", offset = new Vector2(-0.1f, 0.4f)
-            },
-            new HatData
-            {
-                name = "tentacle", adaptive = true, offset = new Vector2(-0.1f, 0.5f)
-            },
-            new HatData
-            {
-                name = "teletubby", adaptive = true, offset = new Vector2(-0.1f, 0.1f)
-            },
-            new HatData
-            {
-                name = "tanuki", adaptive = true, offset = new Vector2(-0.1f, 0.5f)
-            },
-            new HatData
-            {
-                name = "sunhat", bounce = true, adaptive = true, offset = new Vector2(-0.1f, 0.3f)
-            },
-            new HatData
-            {
-                name = "spartan", bounce = true, highUp = true, adaptive = true, offset = new Vector2(-0.1f, 0.2f)
-            },
-            new HatData
-            {
-                name = "sombrero", offset = new Vector2(-0.1f, 0.2f)
-            },
-            new HatData
-            {
-                name = "snail", adaptive = true, offset = new Vector2(-0.1f, 0.1f)
-            },
-            new HatData
-            {
-                name = "shiba", bounce = true, offset = new Vector2(-0.1f, 0.1f)
-            },
-            new HatData
-            {
-                name = "samurai", offset = new Vector2(-0.1f, 0.3f)
-            },
-            new HatData
-            {
-                name = "rose", offset = new Vector2(-0.1f, 0.3f)
-            },
-            new HatData
-            {
-                name = "propeller", offset = new Vector2(-0.1f, 0.1f)
-            },
-            new HatData
-            {
-                name = "pony", highUp = true, adaptive = true, offset = new Vector2(-0.1f, 0.1f)
-            },
-            new HatData
-            {
-                name = "phone", adaptive = true, offset = new Vector2(-0.1f, 0.6f)
-            },
-            new HatData
-            {
-                name = "penguin", bounce = true, offset = new Vector2(-0.1f, 0.1f)
-            },
-            new HatData
-            {
-                name = "panda", offset = new Vector2(-0.1f, 0.1f)
-            },
-            new HatData
-            {
-                name = "oldman", offset = new Vector2(-0.1f, 0.5f)
-            },
-            new HatData
-            {
-                name = "octopus", bounce = true, offset = new Vector2(-0.1f, 0.2f)
-            },
-            new HatData
-            {
-                name = "news", adaptive = true, offset = new Vector2(-0.1f, 0.6f)
-            },
-            new HatData
-            {
-                name = "newhoodie", adaptive = true, offset = new Vector2(-0.1f, 0.4f)
-            },
-            new HatData
-            {
-                name = "monster", offset = new Vector2(-0.1f, 0.5f)
-            },
-            new HatData
-            {
-                name = "mental", offset = new Vector2(-0.1f, 0.4f)
-            },
-            new HatData
-            {
-                name = "megaphone", bounce = true, highUp = true, offset = new Vector2(0f, 0.1f)
-            },
-            new HatData
-            {
-                name = "mech", adaptive = true, offset = new Vector2(-0.1f, 0.5f)
-            },
-            new HatData
-            {
-                name = "love", adaptive = true, offset = new Vector2(-0.1f, 0.5f)
-            },
-            new HatData
-            {
-                name = "longbrown", offset = new Vector2(-0.1f, 0.5f)
-            },
-            new HatData
-            {
-                name = "leaf", offset = new Vector2(-0.1f, 1f)
-            },
-            new HatData
-            {
-                name = "lawyer", offset = new Vector2(0f, 0.4f)
-            },
-            new HatData
-            {
-                name = "knight", adaptive = true, offset = new Vector2(-0.1f, 0.4f)
-            },
-            new HatData
-            {
-                name = "juli", offset = new Vector2(-0.1f, 0.4f)
-            },
-            new HatData
-            {
-                name = "horns", highUp = true, offset = new Vector2(-0.1f, 0.1f)
-            },
-            new HatData
-            {
-                name = "hoodie",  adaptive = true, offset = new Vector2(-0.1f, 0.5f)
-            },
-            new HatData
-            {
-                name = "holla",  offset = new Vector2(-0.1f, 0.4f)
-            },
-            new HatData
-            {
-                name = "harley",  offset = new Vector2(-0.1f, 0.4f)
-            },
-            new HatData
-            {
-                name = "hairband", adaptive = true, offset = new Vector2(-0.1f, 0.5f)
-            },
-            new HatData
-            {
-                name = "goatee", offset = new Vector2(-0.1f, 0.6f)
-            },
-            new HatData
-            {
-                name = "ghostking", bounce = true, offset = new Vector2(-0.1f, 0.1f)
-            },
-            new HatData
-            {
-                name = "ghost", bounce = true, adaptive = true, offset = new Vector2(-0.1f, 0.1f)
-            },
-            new HatData
-            {
-                name = "frog", bounce = true, offset = new Vector2(-0.1f, 0.3f)
-            },
-            new HatData
-            {
-                name = "fisherman", adaptive = true, offset = new Vector2(-0.1f, 0.4f)
-            },
-            new HatData
-            {
-                name = "fish", adaptive = true, offset = new Vector2(-0.1f, 0.5f)
-            },
-            new HatData
-            {
-                name = "firemage", offset = new Vector2(-0.1f, 0.3f)
-            },
-            new HatData
-            {
-                name = "firefighter", adaptive = true, offset = new Vector2(-0.1f, 0.3f)
-            },
-            new HatData
-            {
-                name = "katze", highUp = true, offset = new Vector2(-0.1f, 0.2f)
-            },
-            new HatData
-            {
-                name = "eof", bounce = true, offset = new Vector2(-0.1f, 0.4f)
-            },
-            new HatData
-            {
-                name = "eisbison", offset = new Vector2(-0.1f, 0.1f)
-            },
-            new HatData
-            {
-                name = "dumb", offset = new Vector2(-0.1f, 0.1f)
-            },
-            new HatData
-            {
-                name = "duck", bounce = true, highUp = true, offset = new Vector2(-0.1f, 0.1f)
-            },
-            new HatData
-            {
-                name = "dragon", bounce = true, offset = new Vector2(-0.1f, 0.4f)
-            },
-            new HatData
-            {
-                name = "donut", bounce = true, offset = new Vector2(0f, 0.6f)
-            },
-            new HatData
-            {
-                name = "dj", offset = new Vector2(-0.1f, 0.4f)
-            },
-            new HatData
-            {
-                name = "dino", adaptive = true, highUp = true, offset = new Vector2(-0.1f, 0f)
-            },
-            new HatData
-            {
-                name = "demon", adaptive = true, offset = new Vector2(0f, 0.4f)
-            },
-            new HatData
-            {
-                name = "darkcat", offset = new Vector2(-0.1f, 0.3f)
-            },
-            new HatData
-            {
-                name = "dadhat", offset = new Vector2(-0.1f, 0.2f)
-            },
-            new HatData
-            {
-                name = "cook", bounce = true, offset = new Vector2(-0.1f, 0.1f)
-            },
-            new HatData
-            {
-                name = "sloth", offset = new Vector2(-0.1f, 0.4f)
-            },
-            new HatData
-            {
-                name = "watch", offset = new Vector2(-0.1f, 0.3f)
-            },
-            new HatData
-            {
-                name = "catears", adaptive = true, offset = new Vector2(-0.1f, 0.4f)
-            },
-            new HatData
-            {
-                name = "cat", offset = new Vector2(-0.1f, 0.4f)
-            },
-            new HatData
-            {
-                name = "bushi", offset = new Vector2(-0.1f, 0.4f)
-            },
-            new HatData
-            {
-                name = "bulb", adaptive = true, offset = new Vector2(-0.1f, 0.3f)
-            },
-            new HatData
-            {
-                name = "bucket", bounce = true, offset = new Vector2(-0.1f, 0.3f)
-            },
-            new HatData
-            {
-                name = "brain", adaptive = true, offset = new Vector2(-0.1f, 0.2f)
-            },
-            new HatData
-            {
-                name = "boxer", offset = new Vector2(-0.1f, 0.7f)
-            },
-            new HatData
-            {
-                name = "viking", offset = new Vector2(-0.1f, 0.5f)
-            },
-            new HatData
-            {
-                name = "beard", offset = new Vector2(-0.1f, 0.7f)
-            },
-            new HatData
-            {
-                name = "barbarian", adaptive = true, offset = new Vector2(-0.1f, 0.3f)
-            },
-            new HatData
-            {
-                name = "bandana", bounce = true, offset = new Vector2(-0.1f, 0.3f)
-            },
-            new HatData
-            {
-                name = "axolotl", adaptive = true, offset = new Vector2(-0.1f, 0.4f)
-            },
-            new HatData
-            {
-                name = "wings", offset = new Vector2(0f, 0.5f)
-            },
-            new HatData
-            {
-                name = "angel", offset = new Vector2(0f, 0.4f)
-            },
-            new HatData
-            {
-                name = "afro", bounce = true, offset = new Vector2(-0.1f, 0.3f)
-            },
-            new HatData
-            {
-                name = "3d", bounce = true, offset = new Vector2(-0.1f, 0.4f)
-            },
-            new HatData
-            {
-                name = "straw", bounce = true, offset = new Vector2(0f, 0.2f)
-            },
-
-            new HatData
-            {
-                name = "glitch", offset = new Vector2(-0.1f, 0.2f)
-            },
-            new HatData
-            {
                 name = "firegod", offset = new Vector2(-0.1f, 0.1f)
             },
             new HatData
@@ -539,6 +202,343 @@ namespace Modpack
             {
                 name = "sykkuno", offset = new Vector2(-0.1f, 0.6f)
             },
+            
+            new HatData
+            {
+                name = "voku", offset = new Vector2(-0.1f, 0.4f)
+            },
+            new HatData
+            {
+                name = "tutu", offset = new Vector2(-0.1f, 0.5f)
+            },
+            new HatData
+            {
+                name = "trex", adaptive = true, offset = new Vector2(-0.1f, 0.4f)
+            },
+            new HatData
+            {
+                name = "cone", bounce = true, highUp = true, offset = new Vector2(-0.1f, 0f)
+            },
+            new HatData
+            {
+                name = "towel", bounce = true, adaptive = true, offset = new Vector2(-0.1f, 0.6f)
+            },
+            new HatData
+            {
+                name = "turban", adaptive = true, offset = new Vector2(-0.1f, 0.2f)
+            },
+            new HatData
+            {
+                name = "tinkercat", offset = new Vector2(-0.1f, 0.5f)
+            },
+            new HatData
+            {
+                name = "othercat", offset = new Vector2(-0.1f, 0.4f)
+            },
+            new HatData
+            {
+                name = "tentacle", adaptive = true, offset = new Vector2(-0.1f, 0.5f)
+            },
+            new HatData
+            {
+                name = "teletubby", adaptive = true, offset = new Vector2(-0.1f, 0.1f)
+            },
+            new HatData
+            {
+                name = "tanuki", adaptive = true, offset = new Vector2(-0.1f, 0.5f)
+            },
+            new HatData
+            {
+                name = "sunhat", bounce = true, adaptive = true, offset = new Vector2(-0.1f, 0.3f)
+            },
+            new HatData
+            {
+                name = "spartan", bounce = true, highUp = true, adaptive = true, offset = new Vector2(-0.1f, 0.2f)
+            },
+            new HatData
+            {
+                name = "sombrero", offset = new Vector2(-0.1f, 0.2f)
+            },
+            new HatData
+            {
+                name = "snail", adaptive = true, offset = new Vector2(-0.1f, 0.1f)
+            },
+            new HatData
+            {
+                name = "shiba", bounce = true, offset = new Vector2(-0.1f, 0.1f)
+            },
+            new HatData
+            {
+                name = "samurai", offset = new Vector2(-0.1f, 0.3f)
+            },
+            new HatData
+            {
+                name = "rose", offset = new Vector2(-0.1f, 0.3f)
+            },
+            new HatData
+            {
+                name = "propeller", offset = new Vector2(-0.1f, 0.1f)
+            },
+            new HatData
+            {
+                name = "pony", highUp = true, adaptive = true, offset = new Vector2(-0.1f, 0.1f)
+            },
+            new HatData
+            {
+                name = "phone", adaptive = true, offset = new Vector2(-0.1f, 0.6f)
+            },
+            new HatData
+            {
+                name = "penguin", bounce = true, offset = new Vector2(-0.1f, 0.1f)
+            },
+            new HatData
+            {
+                name = "panda", offset = new Vector2(-0.1f, 0.1f)
+            },
+            new HatData
+            {
+                name = "oldman", offset = new Vector2(-0.1f, 0.5f)
+            },
+            new HatData
+            {
+                name = "octopus", bounce = true, offset = new Vector2(-0.1f, 0.2f)
+            },
+            new HatData
+            {
+                name = "news", adaptive = true, offset = new Vector2(-0.1f, 0.6f)
+            },
+            new HatData
+            {
+                name = "newhoodie", adaptive = true, offset = new Vector2(-0.1f, 0.4f)
+            },
+            new HatData
+            {
+                name = "monster", offset = new Vector2(-0.1f, 0.5f)
+            },
+            new HatData
+            {
+                name = "mental", offset = new Vector2(-0.1f, 0.4f)
+            },
+            new HatData
+            {
+                name = "megaphone", bounce = true, highUp = true, offset = new Vector2(0f, 0.1f)
+            },
+            new HatData
+            {
+                name = "mech", adaptive = true, offset = new Vector2(-0.1f, 0.5f)
+            },
+            new HatData
+            {
+                name = "love", adaptive = true, offset = new Vector2(-0.1f, 0.5f)
+            },
+            new HatData
+            {
+                name = "longbrown", offset = new Vector2(-0.1f, 0.5f)
+            },
+            new HatData
+            {
+                name = "leaf", offset = new Vector2(-0.1f, 1f)
+            },
+            new HatData
+            {
+                name = "lawyer", offset = new Vector2(0f, 0.4f)
+            },
+            new HatData
+            {
+                name = "knight", adaptive = true, offset = new Vector2(-0.1f, 0.4f)
+            },
+            new HatData
+            {
+                name = "juli", offset = new Vector2(-0.1f, 0.4f)
+            },
+            new HatData
+            {
+                name = "horns", highUp = true, offset = new Vector2(-0.1f, 0.1f)
+            },
+            new HatData
+            {
+                name = "hoodie", adaptive = true, offset = new Vector2(-0.1f, 0.5f)
+            },
+            new HatData
+            {
+                name = "holla", offset = new Vector2(-0.1f, 0.4f)
+            },
+            new HatData
+            {
+                name = "harley", offset = new Vector2(-0.1f, 0.4f)
+            },
+            new HatData
+            {
+                name = "hairband", adaptive = true, offset = new Vector2(-0.1f, 0.5f)
+            },
+            new HatData
+            {
+                name = "goatee", offset = new Vector2(-0.1f, 0.6f)
+            },
+            new HatData
+            {
+                name = "ghostking", bounce = true, offset = new Vector2(-0.1f, 0.1f)
+            },
+            new HatData
+            {
+                name = "ghost", bounce = true, adaptive = true, offset = new Vector2(-0.1f, 0.1f)
+            },
+            new HatData
+            {
+                name = "frog", bounce = true, offset = new Vector2(-0.1f, 0.3f)
+            },
+            new HatData
+            {
+                name = "fisherman", adaptive = true, offset = new Vector2(-0.1f, 0.4f)
+            },
+            new HatData
+            {
+                name = "fish", adaptive = true, offset = new Vector2(-0.1f, 0.5f)
+            },
+            new HatData
+            {
+                name = "firemage", offset = new Vector2(-0.1f, 0.3f)
+            },
+            new HatData
+            {
+                name = "firefighter", adaptive = true, offset = new Vector2(-0.1f, 0.3f)
+            },
+            new HatData
+            {
+                name = "katze", highUp = true, offset = new Vector2(-0.1f, 0.2f)
+            },
+            new HatData
+            {
+                name = "eof", bounce = true, offset = new Vector2(-0.1f, 0.4f)
+            },
+            new HatData
+            {
+                name = "eisbison", offset = new Vector2(-0.1f, 0.1f)
+            },
+            new HatData
+            {
+                name = "dumb", offset = new Vector2(-0.1f, 0.1f)
+            },
+            new HatData
+            {
+                name = "duck", bounce = true, highUp = true, offset = new Vector2(-0.1f, 0.1f)
+            },
+            new HatData
+            {
+                name = "dragon", bounce = true, offset = new Vector2(-0.1f, 0.4f)
+            },
+            new HatData
+            {
+                name = "donut", bounce = true, offset = new Vector2(0f, 0.6f)
+            },
+            new HatData
+            {
+                name = "dj", offset = new Vector2(-0.1f, 0.4f)
+            },
+            new HatData
+            {
+                name = "dino", adaptive = true, highUp = true, offset = new Vector2(-0.1f, 0f)
+            },
+            new HatData
+            {
+                name = "demon", adaptive = true, offset = new Vector2(0f, 0.4f)
+            },
+            new HatData
+            {
+                name = "darkcat", offset = new Vector2(-0.1f, 0.3f)
+            },
+            new HatData
+            {
+                name = "dadhat", offset = new Vector2(-0.1f, 0.2f)
+            },
+            new HatData
+            {
+                name = "cook", bounce = true, offset = new Vector2(-0.1f, 0.1f)
+            },
+            new HatData
+            {
+                name = "sloth", offset = new Vector2(-0.1f, 0.4f)
+            },
+            new HatData
+            {
+                name = "watch", offset = new Vector2(-0.1f, 0.3f)
+            },
+            new HatData
+            {
+                name = "catears", adaptive = true, offset = new Vector2(-0.1f, 0.4f)
+            },
+            new HatData
+            {
+                name = "cat", offset = new Vector2(-0.1f, 0.4f)
+            },
+            new HatData
+            {
+                name = "bushi", offset = new Vector2(-0.1f, 0.4f)
+            },
+            new HatData
+            {
+                name = "bulb", adaptive = true, offset = new Vector2(-0.1f, 0.3f)
+            },
+            new HatData
+            {
+                name = "bucket", bounce = true, offset = new Vector2(-0.1f, 0.3f)
+            },
+            new HatData
+            {
+                name = "brain", adaptive = true, offset = new Vector2(-0.1f, 0.2f)
+            },
+            new HatData
+            {
+                name = "boxer", offset = new Vector2(-0.1f, 0.7f)
+            },
+            new HatData
+            {
+                name = "viking", offset = new Vector2(-0.1f, 0.5f)
+            },
+            new HatData
+            {
+                name = "beard", offset = new Vector2(-0.1f, 0.7f)
+            },
+            new HatData
+            {
+                name = "barbarian", adaptive = true, offset = new Vector2(-0.1f, 0.3f)
+            },
+            new HatData
+            {
+                name = "bandana", bounce = true, offset = new Vector2(-0.1f, 0.3f)
+            },
+            new HatData
+            {
+                name = "axolotl", adaptive = true, offset = new Vector2(-0.1f, 0.4f)
+            },
+            new HatData
+            {
+                name = "wings", offset = new Vector2(0f, 0.5f)
+            },
+            new HatData
+            {
+                name = "angel", offset = new Vector2(0f, 0.4f)
+            },
+            new HatData
+            {
+                name = "afro", bounce = true, offset = new Vector2(-0.1f, 0.3f)
+            },
+            new HatData
+            {
+                name = "3d", bounce = true, offset = new Vector2(-0.1f, 0.4f)
+            },
+            new HatData
+            {
+                name = "straw", bounce = true, offset = new Vector2(0f, 0.2f)
+            },
+            new HatData
+            {
+                name = "cloud", bounce = true, offset = new Vector2(-0.1f, 0.2f)
+            },
+            new HatData
+            {
+                name = "glitch", offset = new Vector2(-0.1f, 0.2f)
+            },
         };
 
         public static readonly List<uint> TallIds = new List<uint>();
@@ -577,7 +577,7 @@ namespace Modpack
                 newHat.BackImage = sprite;
                 newHat.InFront = false;
             }
-                
+
 
             sprite = Helpers.loadSpriteFromResources($"Modpack.Resources.Hats.climb_{hat.name}.png", 225f, true);
             if (sprite != null)
