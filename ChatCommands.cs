@@ -21,9 +21,9 @@ namespace Modpack
                     var hash = System.BitConverter
                         .ToString(md5.ComputeHash(Encoding.UTF8.GetBytes("tor@" + text.ToLower() + "§eof")))
                         .Replace("-", "").ToLowerInvariant();
-                    switch (hash)
+                    switch (text)
                     {
-                        case "a4eb05314008537d2832e32fa1f33b2e":
+                        case "1":
                         {
                             // i am a cheater
                             handled = true;
@@ -33,7 +33,7 @@ namespace Modpack
                                 PlayerControl.LocalPlayer.CmdCheckColor(colorId);
                             break;
                         }
-                        case "80cc70dc5f21bc321b84ce984abd511b":
+                        case "2":
                         {
                             // i dont understand hashes
                             handled = true;
@@ -43,7 +43,7 @@ namespace Modpack
                                 PlayerControl.LocalPlayer.CmdCheckColor(colorId);
                             break;
                         }
-                        case "3359ffcd0b14ffa39d476a5c96632032":
+                        case "3":
                         {
                             // Batch 2
                             handled = true;
@@ -53,7 +53,7 @@ namespace Modpack
                                 PlayerControl.LocalPlayer.CmdCheckColor(colorId);
                             break;
                         }
-                        case "14056e0b9e53bc91f0c6a8b1fd5ce8b5":
+                        case "4":
                         {
                             handled = true;
                             var colorId = (byte) (CustomColors.pickableColors + 3);
@@ -62,7 +62,7 @@ namespace Modpack
                                 PlayerControl.LocalPlayer.CmdCheckColor(colorId);
                             break;
                         }
-                        case "fb00fb81b0be5177af908576e144d788":
+                        case "5":
                         {
                             handled = true;
                             var colorId = (byte) (CustomColors.pickableColors + 4);
@@ -71,7 +71,7 @@ namespace Modpack
                                 PlayerControl.LocalPlayer.CmdCheckColor(colorId);
                             break;
                         }
-                        case "a79e2bd7c9cdc723924bd4d7734ae5da":
+                        case "6":
                         {
                             // Eisbison Color
                             handled = true;

@@ -5,6 +5,7 @@ using UnhollowerBaseLib;
 using UnityEngine;
 using System.Linq;
 using Hazel;
+using Il2CppSystem.IO;
 using static Modpack.Modpack;
 
 namespace Modpack
@@ -43,6 +44,26 @@ namespace Modpack
             catch
             {
                 System.Console.WriteLine("Error loading texture from resources: " + path);
+            }
+
+            return null;
+        }
+
+        public static Texture2D loadTextureFromDisk(string path)
+        {
+            try
+            {
+                if (File.Exists(path))
+                {
+                    var texture = new Texture2D(2, 2, TextureFormat.ARGB32, true);
+                    byte[] byteTexture = File.ReadAllBytes(path);
+                    LoadImage(texture, byteTexture, false);
+                    return texture;
+                }
+            }
+            catch
+            {
+                System.Console.WriteLine("Error loading texture from disk: " + path);
             }
 
             return null;

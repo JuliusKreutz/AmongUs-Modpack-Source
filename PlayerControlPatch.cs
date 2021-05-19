@@ -19,7 +19,7 @@ namespace Modpack
         // Helpers
 
         private static PlayerControl setTarget(bool onlyCrewmates = false, bool targetPlayersInVents = false,
-            List<PlayerControl> untargetablePlayers = null, PlayerControl targetingPlayer = null)
+            IReadOnlyCollection<PlayerControl> untargetablePlayers = null, PlayerControl targetingPlayer = null)
         {
             PlayerControl result = null;
             var num = GameOptionsData.KillDistances[Mathf.Clamp(PlayerControl.GameOptions.KillDistance, 0, 2)];
@@ -463,28 +463,42 @@ namespace Modpack
                     RoleInfo.getRoleInfoForPlayer(p).Select(x => Helpers.cs(x.color, x.name)).ToArray());
                 var taskInfo = tasksTotal > 0 ? $"<color=#FAD934FF>({tasksCompleted}/{tasksTotal})</color>" : "";
 
-                var info = "";
+                var playerInfoText = "";
+                var meetingInfoText = "";
                 if (p == PlayerControl.LocalPlayer)
                 {
-                    info = $"{roleNames}";
+                    playerInfoText = $"{roleNames}";
                     if (DestroyableSingleton<TaskPanelBehaviour>.InstanceExists)
                     {
                         var tabText = DestroyableSingleton<TaskPanelBehaviour>.Instance.tab.transform
                             .FindChild("TabText_TMP").GetComponent<TMPro.TextMeshPro>();
                         tabText.SetText($"Tasks {taskInfo}");
                     }
+
+                    meetingInfoText = $"{roleNames} {taskInfo}".Trim();
                 }
                 else if (MapOptions.ghostsSeeRoles && MapOptions.ghostsSeeTasks)
-                    info = $"{roleNames} {taskInfo}".Trim();
+                {
+                    playerInfoText = $"{roleNames} {taskInfo}".Trim();
+                    meetingInfoText = playerInfoText;
+                }
                 else if (MapOptions.ghostsSeeTasks)
-                    info = $"{taskInfo}".Trim();
+                {
+                    playerInfoText = $"{taskInfo}".Trim();
+                    meetingInfoText = playerInfoText;
+                }
                 else if (MapOptions.ghostsSeeRoles)
-                    info = $"{roleNames}";
+                {
+                    playerInfoText = $"{roleNames}";
+                    meetingInfoText = playerInfoText;
+                }
 
-                playerInfo.text = info;
+                playerInfo.text = playerInfoText;
                 playerInfo.gameObject.SetActive(p.Visible);
                 if (meetingInfo != null)
-                    meetingInfo.text = MeetingHud.Instance.state == MeetingHud.VoteStates.Results ? "" : info;
+                    meetingInfo.text = MeetingHud.Instance.state == MeetingHud.VoteStates.Results
+                        ? ""
+                        : meetingInfoText;
             }
         }
 

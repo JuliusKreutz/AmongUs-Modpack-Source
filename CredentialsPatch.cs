@@ -1,22 +1,24 @@
 ﻿using HarmonyLib;
+using UnityEngine;
 
 namespace Modpack
 {
     [HarmonyPatch]
-    public static class CredentialsPatch
-    {
-        [HarmonyPatch(typeof(VersionShower), nameof(VersionShower.Start))]
-        private static class VersionShowerPatch
+    public static class CredentialsPatch {
+        [HarmonyPatch(typeof(MainMenuManager), nameof(MainMenuManager.Start))]
+        private static class LogoPatch
         {
-            private static void Postfix(VersionShower __instance)
-            {
-                var spacer = new string('\n', 8);
+            static void Postfix(PingTracker __instance) {
+                var amongUsLogo = GameObject.Find("bannerLogo_AmongUs");
+                if (amongUsLogo != null) {
+                    amongUsLogo.transform.localScale *= 0.6f;
+                    amongUsLogo.transform.position += Vector3.up * 0.25f;
+                }
 
-                if (__instance.text.text.Contains(spacer))
-                    __instance.text.text = __instance.text.text + "\n<color=#FCCE03FF>Mods loaded!</color>";
-                else
-                    __instance.text.text = __instance.text.text + spacer + "<color=#FCCE03FF>Mods loaded!</color>";
-                __instance.text.alignment = TMPro.TextAlignmentOptions.TopLeft;
+                var torLogo = new GameObject("bannerLogo_TOR");
+                torLogo.transform.position = Vector3.up;
+                var renderer = torLogo.AddComponent<SpriteRenderer>();
+                renderer.sprite = Helpers.loadSpriteFromResources("Modpack.Resources.Banner.png", 70f);                                
             }
         }
     }
