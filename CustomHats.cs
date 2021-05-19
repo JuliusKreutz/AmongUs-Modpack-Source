@@ -533,6 +533,10 @@ namespace Modpack
             },
             new HatData
             {
+                name = "witch", bounce = true, offset = new Vector2(-0.1f, 0.2f)
+            },
+            new HatData
+            {
                 name = "cloud", bounce = true, offset = new Vector2(-0.1f, 0.2f)
             },
             new HatData
