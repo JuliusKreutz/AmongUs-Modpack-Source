@@ -53,12 +53,14 @@ namespace Modpack
 
             public static bool triggerJesterWin;
             public static bool canCallEmergency = true;
+            public static bool canSabotage = true;
 
             public static void clearAndReload()
             {
                 jester = null;
                 triggerJesterWin = false;
                 canCallEmergency = CustomOptionHolder.jesterCanCallEmergency.getBool();
+                canSabotage = CustomOptionHolder.jesterCanSabotage.getBool();
             }
         }
 
@@ -317,9 +319,10 @@ namespace Modpack
         public static Color color = new Color(240f / 255f, 128f / 255f, 72f / 255f, 1);
         private static Sprite spriteCheck;
         public static bool canCallEmergency;
+        public static bool canOnlySwapOthers;
 
-        public static byte playerId1 = Byte.MaxValue;
-        public static byte playerId2 = Byte.MaxValue;
+        public static byte playerId1 = byte.MaxValue;
+        public static byte playerId2 = byte.MaxValue;
 
         public static Sprite getCheckSprite()
         {
@@ -331,9 +334,10 @@ namespace Modpack
         public static void clearAndReload()
         {
             swapper = null;
-            playerId1 = Byte.MaxValue;
-            playerId2 = Byte.MaxValue;
+            playerId1 = byte.MaxValue;
+            playerId2 = byte.MaxValue;
             canCallEmergency = CustomOptionHolder.swapperCanCallEmergency.getBool();
+            canOnlySwapOthers = CustomOptionHolder.swapperCanOnlySwapOthers.getBool();
         }
     }
 
@@ -348,32 +352,29 @@ namespace Modpack
         // Lovers save if next to be exiled is a lover, because RPC of ending game comes before RPC of exiled
         public static bool notAckedExiledIsLover;
 
+        public static bool existing()
+        {
+            return lover1 != null && lover2 != null && !lover1.Data.Disconnected && !lover2.Data.Disconnected;
+        }
+
         public static bool existingAndAlive()
         {
-            return lover1 != null && lover2 != null && !lover1.Data.IsDead && !lover2.Data.IsDead &&
-                   !lover1.Data.Disconnected && !lover2.Data.Disconnected &&
+            return existing() && !lover1.Data.IsDead && !lover2.Data.IsDead &&
                    !notAckedExiledIsLover; // ADD NOT ACKED IS LOVER
         }
 
-        public static bool existingAndCrewLovers()
+        public static bool existingWithKiller()
         {
-            if (lover1 == null || lover2 == null || lover1.Data.Disconnected || lover2.Data.Disconnected)
-                return false; // Null or disconnected
-            return !(lover1.Data.IsImpostor || lover2.Data.IsImpostor || lover1 == Jackal.jackal ||
-                     lover2 == Jackal.jackal || lover1 == Sidekick.sidekick ||
-                     lover2 == Sidekick.sidekick); // Not Impostor, Sidekick or Jackal
+            return existing() && (lover1 == Jackal.jackal || lover2 == Jackal.jackal
+                                                          || lover1 == Sidekick.sidekick || lover2 == Sidekick.sidekick
+                                                          || lover1.Data.IsImpostor || lover2.Data.IsImpostor);
         }
 
         public static bool hasAliveKillingLover(this PlayerControl player)
         {
-            if (!Lovers.existingAndAlive())
+            if (!existingAndAlive() || !existingWithKiller())
                 return false;
-            if (player != null && player != lover1 && player != lover2) // Is Player a Lover?
-                return false;
-            return (lover1 == Jackal.jackal || lover2 == Jackal.jackal
-                                            || lover1 == Sidekick.sidekick || lover2 == Sidekick.sidekick
-                                            || lover1.Data.IsImpostor ||
-                                            lover2.Data.IsImpostor); // Either of the lovers is a killer
+            return player != null && (player == lover1 || player == lover2);
         }
 
         public static void clearAndReload()
@@ -410,7 +411,7 @@ namespace Modpack
             deadBodyPositions = new List<Vector3>();
             limitSoulDuration = CustomOptionHolder.seerLimitSoulDuration.getBool();
             soulDuration = CustomOptionHolder.seerSoulDuration.getFloat();
-            mode = CustomOptionHolder.medicShowShielded.getSelection();
+            mode = CustomOptionHolder.seerMode.getSelection();
         }
     }
 
@@ -694,6 +695,7 @@ namespace Modpack
         public static Sprite buttonSprite;
         public static bool jackalPromotedFromSidekickCanCreateSidekick = true;
         public static bool canCreateSidekickFromImpostor = true;
+        public static bool hasImpostorVision;
 
         public static Sprite getSidekickButtonSprite()
         {
@@ -725,6 +727,7 @@ namespace Modpack
                 CustomOptionHolder.jackalPromotedFromSidekickCanCreateSidekick.getBool();
             canCreateSidekickFromImpostor = CustomOptionHolder.jackalCanCreateSidekickFromImpostor.getBool();
             formerJackals.Clear();
+            hasImpostorVision = CustomOptionHolder.jackalAndSidekickHaveImpostorVision.getBool();
         }
     }
 
@@ -739,6 +742,7 @@ namespace Modpack
         public static bool canUseVents = true;
         public static bool canKill = true;
         public static bool promotesToJackal = true;
+        public static bool hasImpostorVision;
 
         public static void clearAndReload()
         {
@@ -748,6 +752,7 @@ namespace Modpack
             canUseVents = CustomOptionHolder.sidekickCanUseVents.getBool();
             canKill = CustomOptionHolder.sidekickCanKill.getBool();
             promotesToJackal = CustomOptionHolder.sidekickPromotesToJackal.getBool();
+            hasImpostorVision = CustomOptionHolder.jackalAndSidekickHaveImpostorVision.getBool();
         }
     }
 
@@ -786,11 +791,15 @@ namespace Modpack
         public static Color color = Palette.ImpostorRed;
 
         public static bool impostorsCanKillAnyone = true;
+        public static bool canEnterVents;
+        public static bool hasImpostorVision;
 
         public static void clearAndReload()
         {
             spy = null;
             impostorsCanKillAnyone = CustomOptionHolder.spyImpostorsCanKillAnyone.getBool();
+            canEnterVents = CustomOptionHolder.spyCanEnterVents.getBool();
+            hasImpostorVision = CustomOptionHolder.spyHasImpostorVision.getBool();
         }
     }
 
@@ -909,7 +918,7 @@ namespace Modpack
         public static void resetCurse()
         {
             HudManagerStartPatch.warlockCurseButton.Timer = HudManagerStartPatch.warlockCurseButton.MaxTimer;
-            HudManagerStartPatch.warlockCurseButton.Sprite = Warlock.getCurseButtonSprite();
+            HudManagerStartPatch.warlockCurseButton.Sprite = getCurseButtonSprite();
             HudManagerStartPatch.warlockCurseButton.killButtonManager.TimerText.color = Palette.EnabledColor;
             currentTarget = null;
             curseVictim = null;
@@ -1016,8 +1025,8 @@ namespace Modpack
         {
             return PlayerControl.AllPlayerControls.ToArray().All(x =>
             {
-                return x == Arsonist.arsonist || x.Data.IsDead || x.Data.Disconnected ||
-                       Arsonist.dousedPlayers.Any(y => y.PlayerId == x.PlayerId);
+                return x == arsonist || x.Data.IsDead || x.Data.Disconnected ||
+                       dousedPlayers.Any(y => y.PlayerId == x.PlayerId);
             });
         }
 

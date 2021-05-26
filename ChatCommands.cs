@@ -1,5 +1,3 @@
-using System.Security.Cryptography;
-using System.Text;
 using HarmonyLib;
 using System.Linq;
 
@@ -17,10 +15,6 @@ namespace Modpack
                 var handled = false;
                 if (AmongUsClient.Instance.GameState != InnerNet.InnerNetClient.GameStates.Started)
                 {
-                    using var md5 = MD5.Create();
-                    var hash = System.BitConverter
-                        .ToString(md5.ComputeHash(Encoding.UTF8.GetBytes("tor@" + text.ToLower() + "§eof")))
-                        .Replace("-", "").ToLowerInvariant();
                     switch (text)
                     {
                         case "1":

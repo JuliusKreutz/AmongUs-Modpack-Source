@@ -13,7 +13,7 @@ namespace Modpack
     [BepInProcess("Among Us.exe")]
     public class ModpackPlugin : BasePlugin
     {
-        public const string Id = "me.julius-kreutz.Modpack";
+        public const string Id = "de.julius-kreutz.Modpack";
         public const string VersionString = "1.0.0";
         public static readonly Version Version = Version.Parse(VersionString);
 
@@ -26,8 +26,8 @@ namespace Modpack
         public static ConfigEntry<bool> StreamerMode { get; set; }
         public static ConfigEntry<bool> GhostsSeeTasks { get; set; }
         public static ConfigEntry<bool> GhostsSeeRoles { get; set; }
-
-        public static ConfigEntry<bool> HostSeesVotesLog { get; set; }
+        public static ConfigEntry<bool> GhostsSeeVotes { get; set; }
+        public static ConfigEntry<bool> ShowRoleSummary { get; set; }
         public static ConfigEntry<string> StreamerModeReplacementText { get; set; }
         public static ConfigEntry<string> StreamerModeReplacementColor { get; set; }
         public static ConfigEntry<string> Ip { get; set; }
@@ -52,13 +52,15 @@ namespace Modpack
             StreamerMode = Config.Bind("Custom", "Enable Streamer Mode", false);
             GhostsSeeTasks = Config.Bind("Custom", "Ghosts See Remaining Tasks", true);
             GhostsSeeRoles = Config.Bind("Custom", "Ghosts See Roles", true);
-            HostSeesVotesLog = Config.Bind("Custom", "Host Sees Votes Log", false);
-            StreamerModeReplacementText = Config.Bind("Custom", "Streamer Mode Replacement Text", "\n\nModpack");
+            GhostsSeeVotes = Config.Bind("Custom", "Ghosts See Votes", true);
+            ShowRoleSummary = Config.Bind("Custom", "Show Role Summary", true);
+            StreamerModeReplacementText =
+                Config.Bind("Custom", "Streamer Mode Replacement Text", "\n\nThe Other Roles");
             StreamerModeReplacementColor =
                 Config.Bind("Custom", "Streamer Mode Replacement Text Hex Color", "#87AAF5FF");
 
 
-            Ip = Config.Bind("Custom", "Custom Server IP", "127.0.0.1");
+            Ip = Config.Bind("Custom", "Custom Server IP", "julius-kreutz.de");
             Port = Config.Bind("Custom", "Custom Server Port", (ushort) 22023);
             defaultRegions = ServerManager.DefaultRegions;
 

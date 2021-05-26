@@ -3,6 +3,8 @@ using static Modpack.Modpack;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
+using System;
+using System.Text;
 
 namespace Modpack
 {
@@ -30,15 +32,23 @@ namespace Modpack
     {
         // Should be implemented using a proper GameOverReason in the future
         public static WinCondition winCondition = WinCondition.Default;
-        public static bool localIsLover;
-
+        public static readonly List<PlayerRoleInfo> playerRoles = new List<PlayerRoleInfo>();
 
         public static void clear()
         {
+            playerRoles.Clear();
             winCondition = WinCondition.Default;
-            localIsLover = false;
+        }
+
+        internal class PlayerRoleInfo
+        {
+            public string PlayerName { get; set; }
+            public List<RoleInfo> Roles { get; set; }
+            public int TasksCompleted { get; set; }
+            public int TasksTotal { get; set; }
         }
     }
+
 
     [HarmonyPatch(typeof(AmongUsClient), nameof(AmongUsClient.OnGameEnd))]
     public class OnGameEndPatch
@@ -56,6 +66,17 @@ namespace Modpack
             [HarmonyArgument(1)] bool showAd)
         {
             AdditionalTempData.clear();
+
+            foreach (var playerControl in PlayerControl.AllPlayerControls)
+            {
+                var roles = RoleInfo.getRoleInfoForPlayer(playerControl);
+                var (tasksCompleted, tasksTotal) = TasksHandler.taskInfo(playerControl.Data);
+                AdditionalTempData.playerRoles.Add(new AdditionalTempData.PlayerRoleInfo()
+                {
+                    PlayerName = playerControl.Data.PlayerName, Roles = roles, TasksTotal = tasksTotal,
+                    TasksCompleted = tasksCompleted
+                });
+            }
 
             // Remove Jester, Arsonist, Jackal, former Jackals and Sidekick from winners (if they win, they'll be readded)
             var notWinners = new List<PlayerControl>();
@@ -79,12 +100,12 @@ namespace Modpack
             var childLose = Child.child != null && gameOverReason == (GameOverReason) CustomGameOverReason.ChildLose;
             var loversWin = Lovers.existingAndAlive() &&
                             (gameOverReason == (GameOverReason) CustomGameOverReason.LoversWin ||
-                             (TempData.DidHumansWin(gameOverReason) &&
-                              Lovers
-                                  .existingAndCrewLovers())); // Either they win if they are among the last 3 players, or they win if they are both Crewmates and both alive and the Crew wins (Team Imp/Jackal Lovers can only win solo wins)
+                             TempData.DidHumansWin(gameOverReason) &&
+                             !Lovers
+                                 .existingWithKiller()); // Either they win if they are among the last 3 players, or they win if they are both Crewmates and both alive and the Crew wins (Team Imp/Jackal Lovers can only win solo wins)
             var teamJackalWin = gameOverReason == (GameOverReason) CustomGameOverReason.TeamJackalWin &&
-                                ((Jackal.jackal != null && !Jackal.jackal.Data.IsDead) ||
-                                 (Sidekick.sidekick != null && !Sidekick.sidekick.Data.IsDead));
+                                (Jackal.jackal != null && !Jackal.jackal.Data.IsDead ||
+                                 Sidekick.sidekick != null && !Sidekick.sidekick.Data.IsDead);
 
             // Child lose
             if (childLose)
@@ -117,10 +138,8 @@ namespace Modpack
             // Lovers win conditions
             else if (loversWin)
             {
-                AdditionalTempData.localIsLover = (PlayerControl.LocalPlayer == Lovers.lover1 ||
-                                                   PlayerControl.LocalPlayer == Lovers.lover2);
                 // Double win for lovers, crewmates also win
-                if (Lovers.existingAndCrewLovers())
+                if (!Lovers.existingWithKiller())
                 {
                     AdditionalTempData.winCondition = WinCondition.LoversTeamWin;
                     TempData.winners = new Il2CppSystem.Collections.Generic.List<WinningPlayerData>();
@@ -151,13 +170,11 @@ namespace Modpack
                 AdditionalTempData.winCondition = WinCondition.JackalWin;
                 TempData.winners = new Il2CppSystem.Collections.Generic.List<WinningPlayerData>();
                 var wpd = new WinningPlayerData(Jackal.jackal.Data) {IsImpostor = false};
-
                 TempData.winners.Add(wpd);
                 // If there is a sidekick. The sidekick also wins
                 if (Sidekick.sidekick != null)
                 {
                     var wpdSidekick = new WinningPlayerData(Sidekick.sidekick.Data) {IsImpostor = false};
-
                     TempData.winners.Add(wpdSidekick);
                 }
 
@@ -182,8 +199,9 @@ namespace Modpack
         public static void Postfix(EndGameManager __instance)
         {
             var bonusText = UnityEngine.Object.Instantiate(__instance.WinText.gameObject);
-            var position = __instance.WinText.transform.position;
-            bonusText.transform.position = new Vector3(position.x, position.y - 0.8f, position.z);
+            var position1 = __instance.WinText.transform.position;
+            bonusText.transform.position = new Vector3(position1.x,
+                position1.y - 0.8f, position1.z);
             bonusText.transform.localScale = new Vector3(0.7f, 0.7f, 1f);
             var textRenderer = bonusText.GetComponent<TMPro.TMP_Text>();
             textRenderer.text = "";
@@ -199,17 +217,10 @@ namespace Modpack
                     textRenderer.color = Arsonist.color;
                     break;
                 case WinCondition.LoversTeamWin:
-                {
-                    if (AdditionalTempData.localIsLover)
-                    {
-                        __instance.WinText.text = "Double Victory";
-                    }
-
                     textRenderer.text = "Lovers And Crewmates Win";
                     textRenderer.color = Lovers.color;
                     __instance.BackgroundBar.material.SetColor(Color1, Lovers.color);
                     break;
-                }
                 case WinCondition.LoversSoloWin:
                     textRenderer.text = "Lovers Win";
                     textRenderer.color = Lovers.color;
@@ -223,8 +234,41 @@ namespace Modpack
                     textRenderer.text = "Child died";
                     textRenderer.color = Child.color;
                     break;
-                case WinCondition.Default:
-                    break;
+            }
+
+            if (MapOptions.showRoleSummary)
+            {
+                if (Camera.main is { })
+                {
+                    var position = Camera.main.ViewportToWorldPoint(new Vector3(0f, 1f, Camera.main.nearClipPlane));
+                    var roleSummary = UnityEngine.Object.Instantiate(__instance.WinText.gameObject);
+                    roleSummary.transform.position = new Vector3(__instance.ExitButton.transform.position.x + 0.1f,
+                        position.y - 0.1f, -14f);
+                    roleSummary.transform.localScale = new Vector3(1f, 1f, 1f);
+
+                    var roleSummaryText = new StringBuilder();
+                    roleSummaryText.AppendLine("Players and roles at the end of the game:");
+                    foreach (var data in AdditionalTempData.playerRoles)
+                    {
+                        var roles = string.Join(" ", data.Roles.Select(x => Helpers.cs(x.color, x.name)));
+                        var taskInfo = data.TasksTotal > 0
+                            ? $" - <color=#FAD934FF>({data.TasksCompleted}/{data.TasksTotal})</color>"
+                            : "";
+                        roleSummaryText.AppendLine($"{data.PlayerName} - {roles}{taskInfo}");
+                    }
+
+                    var roleSummaryTextMesh = roleSummary.GetComponent<TMPro.TMP_Text>();
+                    roleSummaryTextMesh.alignment = TMPro.TextAlignmentOptions.TopLeft;
+                    roleSummaryTextMesh.color = Color.white;
+                    roleSummaryTextMesh.fontSizeMin = 1.5f;
+                    roleSummaryTextMesh.fontSizeMax = 1.5f;
+                    roleSummaryTextMesh.fontSize = 1.5f;
+
+                    var roleSummaryTextMeshRectTransform = roleSummaryTextMesh.GetComponent<RectTransform>();
+                    roleSummaryTextMeshRectTransform.anchoredPosition =
+                        new Vector2(position.x + 3.5f, position.y - 0.1f);
+                    roleSummaryTextMesh.text = roleSummaryText.ToString();
+                }
             }
 
             AdditionalTempData.clear();
@@ -354,7 +398,7 @@ namespace Modpack
             return true;
         }
 
-        private static void EndGameForSabotage(Behaviour __instance)
+        private static void EndGameForSabotage(ShipStatus __instance)
         {
             __instance.enabled = false;
             ShipStatus.RpcEndGame(GameOverReason.ImpostorBySabotage, false);
@@ -375,10 +419,10 @@ namespace Modpack
             GetPlayerCounts();
         }
 
-        private bool isLover(GameData.PlayerInfo p)
+        private static bool isLover(GameData.PlayerInfo p)
         {
-            return (Lovers.lover1 != null && Lovers.lover1.PlayerId == p.PlayerId) ||
-                   (Lovers.lover2 != null && Lovers.lover2.PlayerId == p.PlayerId);
+            return Lovers.lover1 != null && Lovers.lover1.PlayerId == p.PlayerId ||
+                   Lovers.lover2 != null && Lovers.lover2.PlayerId == p.PlayerId;
         }
 
         private void GetPlayerCounts()

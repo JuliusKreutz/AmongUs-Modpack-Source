@@ -202,11 +202,8 @@ namespace Modpack
         [HarmonyPatch]
         public static class CustomColorPatches
         {
-            [HarmonyPatch(typeof(TranslationController), nameof(TranslationController.GetString), new[]
-            {
-                typeof(StringNames),
-                typeof(Il2CppReferenceArray<Il2CppSystem.Object>)
-            })]
+            [HarmonyPatch(typeof(TranslationController), nameof(TranslationController.GetString), typeof(StringNames),
+                typeof(Il2CppReferenceArray<Il2CppSystem.Object>))]
             private class ColorStringPatch
             {
                 public static bool Prefix(ref string __result, [HarmonyArgument(0)] StringNames name)
@@ -233,12 +230,15 @@ namespace Modpack
                         var chip = chips[i];
                         int row = i / cols, col = i % cols; // Dynamically do the positioning
                         var transform = chip.transform;
-                        transform.localPosition = new Vector3(1.46f + (col * 0.6f), -0.43f - (row * 0.55f),
+                        transform.localPosition = new Vector3(1.46f + col * 0.6f, -0.43f - row * 0.55f,
                             transform.localPosition.z);
                         transform.localScale *= 0.9f;
 
-                        if (i >= pickableColors)
-                            chip.transform.localScale *= 0f; // Needs to exist for PlayerTab
+                        if (i < pickableColors) continue;
+                        chip.transform.localScale *= 0f; // Needs to exist for PlayerTab
+                        chip.enabled = false;
+                        chip.Button.enabled = false;
+                        chip.Button.OnClick.RemoveAllListeners();
                     }
                 }
             }

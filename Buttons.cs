@@ -1,6 +1,7 @@
 using HarmonyLib;
 using Hazel;
 using System;
+using System.Linq;
 using UnityEngine;
 using static Modpack.Modpack;
 using Object = UnityEngine.Object;
@@ -870,7 +871,7 @@ namespace Modpack
             arsonistButton = new CustomButton(
                 () =>
                 {
-                    bool dousedEveryoneAlive = Arsonist.dousedEveryoneAlive();
+                    var dousedEveryoneAlive = Arsonist.dousedEveryoneAlive();
                     if (dousedEveryoneAlive)
                     {
                         var winWriter = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId,
@@ -889,7 +890,7 @@ namespace Modpack
                       !PlayerControl.LocalPlayer.Data.IsDead,
                 () =>
                 {
-                    bool dousedEveryoneAlive = Arsonist.dousedEveryoneAlive();
+                    var dousedEveryoneAlive = Arsonist.dousedEveryoneAlive();
                     if (dousedEveryoneAlive)
                         arsonistButton.killButtonManager.renderer.sprite = Arsonist.getIgniteSprite();
 
@@ -920,12 +921,9 @@ namespace Modpack
                     Arsonist.douseTarget = null;
                     arsonistButton.Timer = Arsonist.dousedEveryoneAlive() ? 0 : arsonistButton.MaxTimer;
 
-                    foreach (PlayerControl p in Arsonist.dousedPlayers)
+                    foreach (var p in Arsonist.dousedPlayers.Where(p => Arsonist.dousedIcons.ContainsKey(p.PlayerId)))
                     {
-                        if (Arsonist.dousedIcons.ContainsKey(p.PlayerId))
-                        {
-                            Arsonist.dousedIcons[p.PlayerId].setSemiTransparent(false);
-                        }
+                        Arsonist.dousedIcons[p.PlayerId].setSemiTransparent(false);
                     }
                 }
             );

@@ -202,7 +202,7 @@ namespace Modpack
             {
                 name = "sykkuno", offset = new Vector2(-0.1f, 0.6f)
             },
-            
+
             new HatData
             {
                 name = "voku", offset = new Vector2(-0.1f, 0.4f)

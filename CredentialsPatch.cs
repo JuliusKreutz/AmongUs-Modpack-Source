@@ -4,13 +4,16 @@ using UnityEngine;
 namespace Modpack
 {
     [HarmonyPatch]
-    public static class CredentialsPatch {
+    public static class CredentialsPatch
+    {
         [HarmonyPatch(typeof(MainMenuManager), nameof(MainMenuManager.Start))]
         private static class LogoPatch
         {
-            static void Postfix(PingTracker __instance) {
+            private static void Postfix(PingTracker __instance)
+            {
                 var amongUsLogo = GameObject.Find("bannerLogo_AmongUs");
-                if (amongUsLogo != null) {
+                if (amongUsLogo != null)
+                {
                     amongUsLogo.transform.localScale *= 0.6f;
                     amongUsLogo.transform.position += Vector3.up * 0.25f;
                 }
@@ -18,7 +21,7 @@ namespace Modpack
                 var torLogo = new GameObject("bannerLogo_TOR");
                 torLogo.transform.position = Vector3.up;
                 var renderer = torLogo.AddComponent<SpriteRenderer>();
-                renderer.sprite = Helpers.loadSpriteFromResources("Modpack.Resources.Banner.png", 70f);                                
+                renderer.sprite = Helpers.loadSpriteFromResources("Modpack.Resources.Banner.png", 70f);
             }
         }
     }

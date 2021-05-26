@@ -133,12 +133,15 @@ namespace Modpack
                 return false;
             }
             // Block impostor not fully grown child kill
-            else if (Child.child != null && target == Child.child && !Child.isGrownUp())
+
+            if (Child.child != null && target == Child.child && !Child.isGrownUp())
             {
                 return false;
             }
+
             // Block Time Master with time shield kill
-            else if (TimeMaster.shieldActive && TimeMaster.timeMaster != null && TimeMaster.timeMaster == target)
+            if (!TimeMaster.shieldActive || TimeMaster.timeMaster == null || TimeMaster.timeMaster != target)
+                return true;
             {
                 if (isMeetingStart) return false;
                 // Only rewind the attempt was not called because a meeting startet 
@@ -149,8 +152,6 @@ namespace Modpack
 
                 return false;
             }
-
-            return true;
         }
 
 
@@ -214,8 +215,8 @@ namespace Modpack
 
         public static bool hasFakeTasks(this PlayerControl player)
         {
-            return (player == Jester.jester || player == Jackal.jackal || player == Sidekick.sidekick ||
-                    player == Arsonist.arsonist);
+            return player == Jester.jester || player == Jackal.jackal || player == Sidekick.sidekick ||
+                   player == Arsonist.arsonist;
         }
 
         public static void clearAllTasks(this PlayerControl player)

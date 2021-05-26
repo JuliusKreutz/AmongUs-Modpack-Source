@@ -188,7 +188,7 @@ namespace Modpack
                 OnEffectEnds();
             }
 
-            killButtonManager.SetCoolDown(Timer, (HasEffect && isEffectActive) ? EffectDuration : MaxTimer);
+            killButtonManager.SetCoolDown(Timer, HasEffect && isEffectActive ? EffectDuration : MaxTimer);
 
             // Trigger OnClickEvent if the hotkey is being pressed down
             if (hotkey.HasValue && Input.GetKeyDown(hotkey.Value)) onClickEvent();

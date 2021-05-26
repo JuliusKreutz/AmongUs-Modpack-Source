@@ -11,6 +11,11 @@ namespace Modpack
         private static ToggleButtonBehaviour streamerModeButton;
         private static ToggleButtonBehaviour ghostsSeeTasksButton;
         private static ToggleButtonBehaviour ghostsSeeRolesButton;
+        private static ToggleButtonBehaviour ghostsSeeVotesButton;
+        private static ToggleButtonBehaviour showRoleSummaryButton;
+
+        public const float xOffset = 1.75f;
+        public const float yOffset = -0.5f;
 
         private static void updateToggle(ToggleButtonBehaviour button, string text, bool on)
         {
@@ -42,13 +47,14 @@ namespace Modpack
             {
                 var transform = __instance.CensorChatButton.transform;
                 origin ??= transform.localPosition + Vector3.up * 0.25f;
-                transform.localPosition = origin.Value + Vector3.left * 1.3f;
+                transform.localPosition = origin.Value + Vector3.left * xOffset;
+                transform.localScale = Vector3.one * 2f / 3f;
             }
 
             if (streamerModeButton == null || streamerModeButton.gameObject == null)
             {
                 streamerModeButton = createCustomToggle("Streamer Mode: ", ModpackPlugin.StreamerMode.Value,
-                    Vector3.right * 1.3f, (UnityEngine.Events.UnityAction) streamerModeToggle, __instance);
+                    Vector3.zero, (UnityEngine.Events.UnityAction) streamerModeToggle, __instance);
 
                 static void streamerModeToggle()
                 {
@@ -60,7 +66,7 @@ namespace Modpack
             if (ghostsSeeTasksButton == null || ghostsSeeTasksButton.gameObject == null)
             {
                 ghostsSeeTasksButton = createCustomToggle("Ghosts See Remaining Tasks: ",
-                    ModpackPlugin.GhostsSeeTasks.Value, new Vector2(-1.3f, -0.5f),
+                    ModpackPlugin.GhostsSeeTasks.Value, Vector3.right * xOffset,
                     (UnityEngine.Events.UnityAction) ghostsSeeTaskToggle, __instance);
 
                 static void ghostsSeeTaskToggle()
@@ -72,15 +78,41 @@ namespace Modpack
                 }
             }
 
-            if (ghostsSeeRolesButton != null && ghostsSeeRolesButton.gameObject != null) return;
-            ghostsSeeRolesButton = createCustomToggle("Ghosts See Roles: ", ModpackPlugin.GhostsSeeRoles.Value,
-                new Vector2(1.3f, -0.5f), (UnityEngine.Events.UnityAction) ghostsSeeRolesToggle, __instance);
-
-            static void ghostsSeeRolesToggle()
+            if (ghostsSeeRolesButton == null || ghostsSeeRolesButton.gameObject == null)
             {
-                ModpackPlugin.GhostsSeeRoles.Value = !ModpackPlugin.GhostsSeeRoles.Value;
-                MapOptions.ghostsSeeRoles = ModpackPlugin.GhostsSeeRoles.Value;
-                updateToggle(ghostsSeeRolesButton, "Ghosts See Roles: ", ModpackPlugin.GhostsSeeRoles.Value);
+                ghostsSeeRolesButton = createCustomToggle("Ghosts See Roles: ", ModpackPlugin.GhostsSeeRoles.Value,
+                    new Vector2(-xOffset, yOffset), (UnityEngine.Events.UnityAction) ghostsSeeRolesToggle, __instance);
+
+                static void ghostsSeeRolesToggle()
+                {
+                    ModpackPlugin.GhostsSeeRoles.Value = !ModpackPlugin.GhostsSeeRoles.Value;
+                    MapOptions.ghostsSeeRoles = ModpackPlugin.GhostsSeeRoles.Value;
+                    updateToggle(ghostsSeeRolesButton, "Ghosts See Roles: ", ModpackPlugin.GhostsSeeRoles.Value);
+                }
+            }
+
+            if (ghostsSeeVotesButton == null || ghostsSeeVotesButton.gameObject == null)
+            {
+                ghostsSeeVotesButton = createCustomToggle("Ghosts See Votes: ", ModpackPlugin.GhostsSeeVotes.Value,
+                    new Vector2(0, yOffset), (UnityEngine.Events.UnityAction) ghostsSeeVotesToggle, __instance);
+
+                static void ghostsSeeVotesToggle()
+                {
+                    ModpackPlugin.GhostsSeeVotes.Value = !ModpackPlugin.GhostsSeeVotes.Value;
+                    MapOptions.ghostsSeeVotes = ModpackPlugin.GhostsSeeVotes.Value;
+                    updateToggle(ghostsSeeVotesButton, "Ghosts See Votes: ", ModpackPlugin.GhostsSeeVotes.Value);
+                }
+            }
+
+            if (showRoleSummaryButton != null && showRoleSummaryButton.gameObject != null) return;
+            showRoleSummaryButton = createCustomToggle("Role Summary: ", ModpackPlugin.ShowRoleSummary.Value,
+                new Vector2(xOffset, yOffset), (UnityEngine.Events.UnityAction) showRoleSummaryToggle, __instance);
+
+            static void showRoleSummaryToggle()
+            {
+                ModpackPlugin.ShowRoleSummary.Value = !ModpackPlugin.ShowRoleSummary.Value;
+                MapOptions.showRoleSummary = ModpackPlugin.ShowRoleSummary.Value;
+                updateToggle(showRoleSummaryButton, "Role Summary: ", ModpackPlugin.ShowRoleSummary.Value);
             }
         }
     }

@@ -1,4 +1,4 @@
-using Il2CppSystem.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Modpack
@@ -12,6 +12,8 @@ namespace Modpack
         public static bool hidePlayerNames;
         public static bool ghostsSeeRoles = true;
         public static bool ghostsSeeTasks = true;
+        public static bool ghostsSeeVotes = true;
+        public static bool showRoleSummary = true;
 
         // Updating values
         public static int meetingsCount;
@@ -30,6 +32,8 @@ namespace Modpack
             hidePlayerNames = CustomOptionHolder.hidePlayerNames.getBool();
             ghostsSeeRoles = ModpackPlugin.GhostsSeeRoles.Value;
             ghostsSeeTasks = ModpackPlugin.GhostsSeeTasks.Value;
+            ghostsSeeVotes = ModpackPlugin.GhostsSeeVotes.Value;
+            showRoleSummary = ModpackPlugin.ShowRoleSummary.Value;
         }
     }
 }

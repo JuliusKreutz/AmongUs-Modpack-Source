@@ -67,7 +67,7 @@ namespace Modpack
             LookAt2d(arrow.transform, target);
         }
 
-        private void LookAt2d(Transform transform, Vector3 target)
+        private static void LookAt2d(Transform transform, Vector3 target)
         {
             var vector = target - transform.position;
             vector.Normalize();
@@ -77,7 +77,7 @@ namespace Modpack
             transform.rotation = Quaternion.Euler(0f, 0f, num * 57.29578f);
         }
 
-        private bool Between(float value, float min, float max)
+        private static bool Between(float value, float min, float max)
         {
             return value > min && value < max;
         }

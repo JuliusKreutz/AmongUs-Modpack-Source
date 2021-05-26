@@ -19,7 +19,7 @@ namespace Modpack
         // Helpers
 
         private static PlayerControl setTarget(bool onlyCrewmates = false, bool targetPlayersInVents = false,
-            IReadOnlyCollection<PlayerControl> untargetablePlayers = null, PlayerControl targetingPlayer = null)
+            List<PlayerControl> untargetablePlayers = null, PlayerControl targetingPlayer = null)
         {
             PlayerControl result = null;
             var num = GameOptionsData.KillDistances[Mathf.Clamp(PlayerControl.GameOptions.KillDistance, 0, 2)];
@@ -73,15 +73,15 @@ namespace Modpack
                                          Morphling.morphTimer > 0f;
                 var hasVisibleShield = false;
                 if (Camouflager.camouflageTimer <= 0f && Medic.shielded != null &&
-                    ((target == Medic.shielded && !isMorphedMorphling) ||
-                     (isMorphedMorphling && Morphling.morphTarget == Medic.shielded)))
+                    (target == Medic.shielded && !isMorphedMorphling ||
+                     isMorphedMorphling && Morphling.morphTarget == Medic.shielded))
                 {
                     hasVisibleShield = Medic.showShielded == 0 // Everyone
-                                       || (Medic.showShielded == 1 && (PlayerControl.LocalPlayer == Medic.shielded ||
-                                                                       PlayerControl.LocalPlayer ==
-                                                                       Medic.medic)) // Shielded + Medic
-                                       || (Medic.showShielded == 2 &&
-                                           PlayerControl.LocalPlayer == Medic.medic); // Medic only
+                                       || Medic.showShielded == 1 && (PlayerControl.LocalPlayer == Medic.shielded ||
+                                                                      PlayerControl.LocalPlayer ==
+                                                                      Medic.medic) // Shielded + Medic
+                                       || Medic.showShielded == 2 &&
+                                       PlayerControl.LocalPlayer == Medic.medic; // Medic only
                 }
 
                 if (hasVisibleShield)
@@ -277,7 +277,7 @@ namespace Modpack
 
             var untargetables = new List<PlayerControl>();
             if (Spy.spy != null) untargetables.Add(Spy.spy);
-            Eraser.currentTarget = setTarget(onlyCrewmates: !Eraser.canEraseAnyone,
+            Eraser.currentTarget = setTarget(!Eraser.canEraseAnyone,
                 untargetablePlayers: Eraser.canEraseAnyone ? new List<PlayerControl>() : untargetables);
             setPlayerOutline(Eraser.currentTarget, Eraser.color);
         }
@@ -459,7 +459,7 @@ namespace Modpack
                 }
 
                 var (tasksCompleted, tasksTotal) = TasksHandler.taskInfo(p.Data);
-                var roleNames = String.Join(", ",
+                var roleNames = string.Join(" ",
                     RoleInfo.getRoleInfoForPlayer(p).Select(x => Helpers.cs(x.color, x.name)).ToArray());
                 var taskInfo = tasksTotal > 0 ? $"<color=#FAD934FF>({tasksCompleted}/{tasksTotal})</color>" : "";
 
@@ -600,10 +600,10 @@ namespace Modpack
         public static void Prefix(PlayerPhysics __instance)
         {
             var correctOffset = Camouflager.camouflageTimer <= 0f && (__instance.myPlayer == Child.child ||
-                                                                      (Morphling.morphling != null &&
-                                                                       __instance.myPlayer == Morphling.morphling &&
-                                                                       Morphling.morphTarget == Child.child &&
-                                                                       Morphling.morphTimer > 0f));
+                                                                      Morphling.morphling != null &&
+                                                                      __instance.myPlayer == Morphling.morphling &&
+                                                                      Morphling.morphTarget == Child.child &&
+                                                                      Morphling.morphTimer > 0f);
             if (!correctOffset) return;
             var currentScaling = (Child.growingProgress() + 1) * 0.5f;
             __instance.myPlayer.Collider.offset = currentScaling * Child.defaultColliderOffset * Vector2.down;
@@ -676,7 +676,7 @@ namespace Modpack
             var deadPlayer = deadPlayers?.Where(x => x.player?.PlayerId == target?.PlayerId).FirstOrDefault();
 
             if (deadPlayer == null || deadPlayer.killerIfExisting == null) return;
-            var timeSinceDeath = ((float) (DateTime.UtcNow - deadPlayer.timeOfDeath).TotalMilliseconds);
+            var timeSinceDeath = (float) (DateTime.UtcNow - deadPlayer.timeOfDeath).TotalMilliseconds;
             var msg = "";
 
             if (isMedicReport)
@@ -745,19 +745,12 @@ namespace Modpack
                 target.clearAllTasks();
 
             // Lover suicide trigger on murder
-            if ((Lovers.lover1 != null && target == Lovers.lover1) ||
-                (Lovers.lover2 != null && target == Lovers.lover2))
+            if (Lovers.lover1 != null && target == Lovers.lover1 || Lovers.lover2 != null && target == Lovers.lover2)
             {
                 var otherLover = target == Lovers.lover1 ? Lovers.lover2 : Lovers.lover1;
-                if (PlayerControl.LocalPlayer == target && otherLover != null && !otherLover.Data.IsDead &&
-                    Lovers.bothDie)
+                if (otherLover != null && !otherLover.Data.IsDead && Lovers.bothDie)
                 {
-                    // Only the dead lover sends the rpc
-                    var writer = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId,
-                        (byte) CustomRPC.LoverSuicide, Hazel.SendOption.Reliable, -1);
-                    writer.Write(otherLover.PlayerId);
-                    AmongUsClient.Instance.FinishRpcImmediately(writer);
-                    RPCProcedure.loverSuicide(otherLover.PlayerId);
+                    otherLover.MurderPlayer(otherLover);
                 }
             }
 
@@ -883,8 +876,8 @@ namespace Modpack
                 __instance.clearAllTasks();
 
             // Lover suicide trigger on exile
-            if ((Lovers.lover1 != null && __instance == Lovers.lover1) ||
-                (Lovers.lover2 != null && __instance == Lovers.lover2))
+            if (Lovers.lover1 != null && __instance == Lovers.lover1 ||
+                Lovers.lover2 != null && __instance == Lovers.lover2)
             {
                 var otherLover = __instance == Lovers.lover1 ? Lovers.lover2 : Lovers.lover1;
                 if (otherLover != null && !otherLover.Data.IsDead && Lovers.bothDie)
@@ -909,9 +902,9 @@ namespace Modpack
             __result = __instance.moveable &&
                        !Minigame.Instance &&
                        (!DestroyableSingleton<HudManager>.InstanceExists ||
-                        (!DestroyableSingleton<HudManager>.Instance.Chat.IsOpen &&
-                         !DestroyableSingleton<HudManager>.Instance.KillOverlay.IsOpen &&
-                         !DestroyableSingleton<HudManager>.Instance.GameMenu.IsOpen)) &&
+                        !DestroyableSingleton<HudManager>.Instance.Chat.IsOpen &&
+                        !DestroyableSingleton<HudManager>.Instance.KillOverlay.IsOpen &&
+                        !DestroyableSingleton<HudManager>.Instance.GameMenu.IsOpen) &&
                        (!MapBehaviour.Instance || !MapBehaviour.Instance.IsOpenStopped) &&
                        !MeetingHud.Instance &&
                        !CustomPlayerMenu.Instance &&

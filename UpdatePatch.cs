@@ -22,8 +22,8 @@ namespace Modpack
             if ((source == Lovers.lover1 || source == Lovers.lover2) &&
                 (target == Lovers.lover1 || target == Lovers.lover2))
                 return false; // Members of team Lovers see the names of each other
-            return (source != Jackal.jackal && source != Sidekick.sidekick) || (target != Jackal.jackal &&
-                target != Sidekick.sidekick && target != Jackal.fakeSidekick);
+            return source != Jackal.jackal && source != Sidekick.sidekick || target != Jackal.jackal &&
+                target != Sidekick.sidekick && target != Jackal.fakeSidekick;
         }
 
         private static void resetNameTagsAndColors()
@@ -112,12 +112,6 @@ namespace Modpack
                 setPlayerNameColor(Shifter.shifter, Shifter.color);
             else if (Swapper.swapper != null && Swapper.swapper == PlayerControl.LocalPlayer)
                 setPlayerNameColor(Swapper.swapper, Swapper.color);
-            else if (Lovers.lover1 != null && Lovers.lover2 != null && (Lovers.lover1 == PlayerControl.LocalPlayer ||
-                                                                        Lovers.lover2 == PlayerControl.LocalPlayer))
-            {
-                setPlayerNameColor(Lovers.lover1, Lovers.color);
-                setPlayerNameColor(Lovers.lover2, Lovers.color);
-            }
             else if (Seer.seer != null && Seer.seer == PlayerControl.LocalPlayer)
                 setPlayerNameColor(Seer.seer, Seer.color);
             else if (Hacker.hacker != null && Hacker.hacker == PlayerControl.LocalPlayer)
@@ -174,25 +168,41 @@ namespace Modpack
             // Impostor roles with no changes: Morphling, Camouflager, Vampire, Godfather, Eraser, Janitor, Cleaner, Warlock and Mafioso
         }
 
-        private static void setMafiaNameTags()
+        private static void setNameTags()
         {
-            if (PlayerControl.LocalPlayer == null || !PlayerControl.LocalPlayer.Data.IsImpostor) return;
-            foreach (var player in PlayerControl.AllPlayerControls)
-                if (Godfather.godfather != null && Godfather.godfather == player)
-                    player.nameText.text = player.Data.PlayerName + " (G)";
-                else if (Mafioso.mafioso != null && Mafioso.mafioso == player)
-                    player.nameText.text = player.Data.PlayerName + " (M)";
-                else if (Janitor.janitor != null && Janitor.janitor == player)
-                    player.nameText.text = player.Data.PlayerName + " (J)";
-            if (MeetingHud.Instance == null) return;
+            // Mafia
+            if (PlayerControl.LocalPlayer != null && PlayerControl.LocalPlayer.Data.IsImpostor)
             {
+                foreach (var player in PlayerControl.AllPlayerControls)
+                    if (Godfather.godfather != null && Godfather.godfather == player)
+                        player.nameText.text = player.Data.PlayerName + " (G)";
+                    else if (Mafioso.mafioso != null && Mafioso.mafioso == player)
+                        player.nameText.text = player.Data.PlayerName + " (M)";
+                    else if (Janitor.janitor != null && Janitor.janitor == player)
+                        player.nameText.text = player.Data.PlayerName + " (J)";
+                if (MeetingHud.Instance != null)
+                    foreach (var player in MeetingHud.Instance.playerStates)
+                        if (Godfather.godfather != null && Godfather.godfather.PlayerId == player.TargetPlayerId)
+                            player.NameText.text = Godfather.godfather.Data.PlayerName + " (G)";
+                        else if (Mafioso.mafioso != null && Mafioso.mafioso.PlayerId == player.TargetPlayerId)
+                            player.NameText.text = Mafioso.mafioso.Data.PlayerName + " (M)";
+                        else if (Janitor.janitor != null && Janitor.janitor.PlayerId == player.TargetPlayerId)
+                            player.NameText.text = Janitor.janitor.Data.PlayerName + " (J)";
+            }
+
+            // Lovers
+            if (Lovers.lover1 == null || Lovers.lover2 == null || (Lovers.lover1 != PlayerControl.LocalPlayer &&
+                                                                   Lovers.lover2 != PlayerControl.LocalPlayer)) return;
+            {
+                var suffix = Helpers.cs(Lovers.color, " ❤");
+                Lovers.lover1.nameText.text += suffix;
+                Lovers.lover2.nameText.text += suffix;
+
+                if (MeetingHud.Instance == null) return;
                 foreach (var player in MeetingHud.Instance.playerStates)
-                    if (Godfather.godfather != null && Godfather.godfather.PlayerId == player.TargetPlayerId)
-                        player.NameText.text = Godfather.godfather.Data.PlayerName + " (G)";
-                    else if (Mafioso.mafioso != null && Mafioso.mafioso.PlayerId == player.TargetPlayerId)
-                        player.NameText.text = Mafioso.mafioso.Data.PlayerName + " (M)";
-                    else if (Janitor.janitor != null && Janitor.janitor.PlayerId == player.TargetPlayerId)
-                        player.NameText.text = Janitor.janitor.Data.PlayerName + " (J)";
+                    if (Lovers.lover1.PlayerId == player.TargetPlayerId ||
+                        Lovers.lover2.PlayerId == player.TargetPlayerId)
+                        player.NameText.text += suffix;
             }
         }
 
@@ -238,7 +248,7 @@ namespace Modpack
                     Morphling.morphling.HatRenderer.SetHat(Morphling.morphTarget.Data.HatId,
                         Morphling.morphTarget.Data.ColorId);
                     Morphling.morphling.nameText.transform.localPosition = new Vector3(0f,
-                        (Morphling.morphTarget.Data.HatId == 0U) ? 0.7f : 1.05f, -0.5f);
+                        Morphling.morphTarget.Data.HatId == 0U ? 0.7f : 1.05f, -0.5f);
 
                     if (Morphling.morphling.MyPhysics.Skin.skin.ProdId != DestroyableSingleton<HatManager>.Instance
                         .AllSkins[(int) Morphling.morphTarget.Data.SkinId].ProdId)
@@ -393,9 +403,8 @@ namespace Modpack
             resetNameTagsAndColors();
             setNameColors();
             updateShielded();
+            setNameTags();
 
-            // Mafia
-            setMafiaNameTags();
             // Impostors
             updateImpostorKillButton(__instance);
             // Timer updates

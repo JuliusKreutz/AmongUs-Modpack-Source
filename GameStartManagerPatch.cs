@@ -124,7 +124,7 @@ namespace Modpack
                                     $"<color=#FF0000FF>{client.Character.Data.PlayerName} has an older version of The Other Roles (v{playerVersions[client.Id]})\n</color>";
                                 blockStart = true;
                             }
-                            else if (diff > 0)
+                            else if (diff < 0)
                             {
                                 message +=
                                     $"<color=#FF0000FF>{client.Character.Data.PlayerName} has a newer version of The Other Roles (v{playerVersions[client.Id]}) \n</color>";
@@ -173,19 +173,7 @@ namespace Modpack
         {
             public static bool Prefix(GameStartManager __instance)
             {
-                // Block game start if not everyone has the same mod version
-                var continueStart = true;
-
-                // Allow the start for this version to test the feature, blocking it with the next version
-                // if (AmongUsClient.Instance.AmHost) {
-                //     foreach (InnerNet.ClientData client in AmongUsClient.Instance.allClients) {
-                //         if (client.Character == null) continue;
-                //         var dummyComponent = client.Character.GetComponent<DummyBehaviour>();
-                //         if (dummyComponent != null && dummyComponent.enabled) continue;
-                //         if (!playerVersions.ContainsKey(client.Id) || (playerVersions[client.Id].Item1 != ModpackPlugin.Major || playerVersions[client.Id].Item2 != ModpackPlugin.Minor || playerVersions[client.Id].Item3 != ModpackPlugin.Patch))
-                //             continueStart = false;
-                //     }
-                // }
+                const bool continueStart = true;
                 return continueStart;
             }
         }
