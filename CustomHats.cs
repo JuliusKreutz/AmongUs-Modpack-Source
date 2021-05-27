@@ -497,11 +497,95 @@ namespace Modpack
             },
             new HatData
             {
+                name = "vampire", offset = new Vector2(-0.1f, 0.6f)
+            },
+            new HatData
+            {
+                name = "shark", adaptive = true, offset = new Vector2(-0.1f, 0.5f)
+            },
+            new HatData
+            {
+                name = "bavari", offset = new Vector2(-0.1f, 0.6f)
+            },
+            new HatData
+            {
+                name = "cesar", bounce = true, offset = new Vector2(-0.1f, 0.3f)
+            },
+            new HatData
+            {
+                name = "divi", adaptive = true, offset = new Vector2(0f, 0.5f)
+            },
+            new HatData
+            {
+                name = "french", bounce = true, offset = new Vector2(-0.1f, 0.5f)
+            },
+            new HatData
+            {
+                name = "irrelephant", adaptive = true, offset = new Vector2(-0.1f, 0.5f)
+            },
+            new HatData
+            {
+                name = "nephias", offset = new Vector2(-0.1f, 0.4f)
+            },
+            new HatData
+            {
+                name = "reggea", offset = new Vector2(-0.1f, 0.3f)
+            },
+            new HatData
+            {
+                name = "turtle", bounce = true, offset = new Vector2(-0.1f, 0.3f)
+            },
+            new HatData
+            {
+                name = "vlesk", offset = new Vector2(-0.1f, 0.4f)
+            },
+            new HatData
+            {
+                name = "whale", offset = new Vector2(0.1f, 0.1f)
+            },
+            new HatData
+            {
+                name = "bubblebath", offset = new Vector2(-0.1f, 0.4f)
+            },
+            new HatData
+            {
+                name = "butterfly", adaptive = true, offset = new Vector2(0f, 0.4f)
+            },
+            new HatData
+            {
+                name = "flowercrown", offset = new Vector2(-0.1f, 0.3f)
+            },
+            new HatData
+            {
+                name = "hoodie2", adaptive = true, offset = new Vector2(-0.1f, 0.4f)
+            },
+            new HatData
+            {
+                name = "jackal", adaptive = true, offset = new Vector2(-0.1f, 0.4f)
+            },
+            new HatData
+            {
+                name = "jellyfish", adaptive = true, offset = new Vector2(-0.1f, 0.3f)
+            },
+            new HatData
+            {
+                name = "ice", offset = new Vector2(-0.1f, 0.2f)
+            },
+            new HatData
+            {
+                name = "racoon2", offset = new Vector2(-0.1f, 0.2f)
+            },
+            new HatData
+            {
+                name = "umbrella", adaptive = true, offset = new Vector2(-0.1f, 0.1f)
+            },
+            new HatData
+            {
                 name = "beard", offset = new Vector2(-0.1f, 0.7f)
             },
             new HatData
             {
-                name = "barbarian", adaptive = true, offset = new Vector2(-0.1f, 0.3f)
+                name = "barbarian", adaptive = true, offset = new Vector2(-0.1f, 0.4f)
             },
             new HatData
             {
