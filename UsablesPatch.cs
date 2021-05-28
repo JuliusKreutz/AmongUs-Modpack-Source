@@ -30,7 +30,9 @@ namespace Modpack
             else if (Spy.canEnterVents && Spy.spy != null && Spy.spy == @object)
                 roleCouldUse = true;
             else if (pc.IsImpostor) {
-                if (Janitor.janitor != null && Janitor.janitor == PlayerControl.LocalPlayer)
+                if (Morphling.morphling != null && Morphling.morphling == PlayerControl.LocalPlayer)
+                    roleCouldUse = false;
+                else if (Janitor.janitor != null && Janitor.janitor == PlayerControl.LocalPlayer)
                     roleCouldUse = false;
                 else if (Mafioso.mafioso != null && Mafioso.mafioso == PlayerControl.LocalPlayer && Godfather.godfather != null && !Godfather.godfather.Data.IsDead)
                     roleCouldUse = false;
