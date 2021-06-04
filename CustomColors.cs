@@ -10,7 +10,7 @@ namespace Modpack
     public class CustomColors
     {
         protected static readonly Dictionary<int, string> ColorStrings = new Dictionary<int, string>();
-        public static readonly List<int> lighterColors = new List<int>() {3, 4, 5, 7, 10, 11};
+        public static readonly List<int> lighterColors = new List<int> {3, 4, 5, 7, 10, 11};
         public static uint pickableColors = 12;
 
         public static void Load()

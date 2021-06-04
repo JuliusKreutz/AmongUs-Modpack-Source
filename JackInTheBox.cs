@@ -25,11 +25,11 @@ namespace Modpack
 
         public static void startAnimation(int ventId)
         {
-            var box = AllJackInTheBoxes.FirstOrDefault((x) => x?.vent != null && x.vent.Id == ventId);
+            var box = AllJackInTheBoxes.FirstOrDefault(x => x?.vent != null && x.vent.Id == ventId);
             if (box == null) return;
             var vent = box.vent;
 
-            HudManager.Instance.StartCoroutine(Effects.Lerp(0.6f, new Action<float>((p) =>
+            HudManager.Instance.StartCoroutine(Effects.Lerp(0.6f, new Action<float>(p =>
             {
                 if (vent == null || vent.myRend == null) return;
                 vent.myRend.sprite = getBoxAnimationSprite((int) (p * boxAnimationSprites.Length));

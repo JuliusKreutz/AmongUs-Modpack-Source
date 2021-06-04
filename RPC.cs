@@ -31,7 +31,7 @@ namespace Modpack
         Morphling,
         Camouflager,
         Hacker,
-        Child,
+        Mini,
         Tracker,
         Vampire,
         Snitch,
@@ -44,6 +44,7 @@ namespace Modpack
         Warlock,
         SecurityGuard,
         Arsonist,
+        Guesser,
         Crewmate,
         Impostor
     }
@@ -91,7 +92,8 @@ namespace Modpack
         WarlockCurseKill,
         PlaceCamera,
         SealVent,
-        ArsonistWin
+        ArsonistWin,
+        GuesserShoot
     }
 
     public static class RPCProcedure
@@ -187,8 +189,8 @@ namespace Modpack
                         case RoleId.Hacker:
                             Hacker.hacker = player;
                             break;
-                        case RoleId.Child:
-                            Child.child = player;
+                        case RoleId.Mini:
+                            Mini.mini = player;
                             break;
                         case RoleId.Tracker:
                             Tracker.tracker = player;
@@ -226,6 +228,9 @@ namespace Modpack
                         case RoleId.Arsonist:
                             Arsonist.arsonist = player;
                             break;
+                        case RoleId.Guesser:
+                            Guesser.guesser = player;
+                            break;
                     }
                 }
         }
@@ -236,9 +241,11 @@ namespace Modpack
             if (player != null) player.SetColor(colorId);
         }
 
-        public static void versionHandshake(int major, int minor, int build, int clientId)
+        public static void versionHandshake(int major, int minor, int build, int revision, Guid guid, int clientId)
         {
-            GameStartManagerPatch.playerVersions[clientId] = new Version(major, minor, build);
+            var ver = revision < 0 ? new Version(major, minor, build) : new Version(major, minor, build, revision);
+
+            GameStartManagerPatch.playerVersions[clientId] = new GameStartManagerPatch.PlayerVersion(ver, guid);
         }
 
         public static void useUncheckedVent(int ventId, byte playerId, byte isEnter)
@@ -307,7 +314,7 @@ namespace Modpack
 
             HudManager.Instance.FullScreen.color = new Color(0f, 0.5f, 0.8f, 0.3f);
             HudManager.Instance.FullScreen.enabled = true;
-            HudManager.Instance.StartCoroutine(Effects.Lerp(TimeMaster.rewindTime / 2, new Action<float>((p) =>
+            HudManager.Instance.StartCoroutine(Effects.Lerp(TimeMaster.rewindTime / 2, new Action<float>(p =>
             {
                 if (p == 1f) HudManager.Instance.FullScreen.enabled = false;
             })));
@@ -327,7 +334,7 @@ namespace Modpack
         public static void timeMasterShield()
         {
             TimeMaster.shieldActive = true;
-            HudManager.Instance.StartCoroutine(Effects.Lerp(TimeMaster.shieldDuration, new Action<float>((p) =>
+            HudManager.Instance.StartCoroutine(Effects.Lerp(TimeMaster.shieldDuration, new Action<float>(p =>
             {
                 if (p == 1f) TimeMaster.shieldActive = false;
             })));
@@ -346,7 +353,7 @@ namespace Modpack
             if (Medic.shielded == null || Medic.shielded != PlayerControl.LocalPlayer || !Medic.showAttemptToShielded ||
                 HudManager.Instance?.FullScreen == null) return;
             HudManager.Instance.FullScreen.enabled = true;
-            HudManager.Instance.StartCoroutine(Effects.Lerp(0.5f, new Action<float>((p) =>
+            HudManager.Instance.StartCoroutine(Effects.Lerp(0.5f, new Action<float>(p =>
             {
                 var renderer = HudManager.Instance.FullScreen;
                 var c = Palette.ImpostorRed;
@@ -400,8 +407,6 @@ namespace Modpack
             else if (Lovers.lover2 != null && player == Lovers.lover2) Lovers.lover2 = oldShifter;
 
             // Shift role
-            if (Jester.jester != null && Jester.jester == player)
-                Jester.jester = oldShifter;
             if (Mayor.mayor != null && Mayor.mayor == player)
                 Mayor.mayor = oldShifter;
             if (Engineer.engineer != null && Engineer.engineer == player)
@@ -422,8 +427,8 @@ namespace Modpack
                 Seer.seer = oldShifter;
             if (Hacker.hacker != null && Hacker.hacker == player)
                 Hacker.hacker = oldShifter;
-            if (Child.child != null && Child.child == player)
-                Child.child = oldShifter;
+            if (Mini.mini != null && Mini.mini == player)
+                Mini.mini = oldShifter;
             if (Tracker.tracker != null && Tracker.tracker == player)
                 Tracker.tracker = oldShifter;
             if (Snitch.snitch != null && Snitch.snitch == player)
@@ -432,8 +437,8 @@ namespace Modpack
                 Spy.spy = oldShifter;
             if (SecurityGuard.securityGuard != null && SecurityGuard.securityGuard == player)
                 SecurityGuard.securityGuard = oldShifter;
-            if (Arsonist.arsonist != null && Arsonist.arsonist == player)
-                Arsonist.arsonist = oldShifter;
+            if (Guesser.guesser != null && Guesser.guesser == player)
+                Guesser.guesser = oldShifter;
 
             // Set cooldowns to max for both players
             if (PlayerControl.LocalPlayer == oldShifter || PlayerControl.LocalPlayer == player)
@@ -575,7 +580,7 @@ namespace Modpack
             if (player == Shifter.shifter) Shifter.clearAndReload();
             if (player == Seer.seer) Seer.clearAndReload();
             if (player == Hacker.hacker) Hacker.clearAndReload();
-            if (player == Child.child) Child.clearAndReload();
+            if (player == Mini.mini) Mini.clearAndReload();
             if (player == Tracker.tracker) Tracker.clearAndReload();
             if (player == Snitch.snitch) Snitch.clearAndReload();
             if (player == Swapper.swapper) Swapper.clearAndReload();
@@ -597,6 +602,7 @@ namespace Modpack
             // Other roles
             if (player == Jester.jester) Jester.clearAndReload();
             if (player == Arsonist.arsonist) Arsonist.clearAndReload();
+            if (player == Guesser.guesser) Guesser.clearAndReload();
             if (!ignoreLovers && (player == Lovers.lover1 || player == Lovers.lover2))
             {
                 // The whole Lover couple is being erased
@@ -694,7 +700,7 @@ namespace Modpack
 
         public static void sealVent(int ventId)
         {
-            var vent = ShipStatus.Instance.AllVents.FirstOrDefault((x) => x != null && x.Id == ventId);
+            var vent = ShipStatus.Instance.AllVents.FirstOrDefault(x => x != null && x.Id == ventId);
             if (vent == null) return;
 
             SecurityGuard.remainingScrews -= SecurityGuard.ventPrice;
@@ -717,6 +723,30 @@ namespace Modpack
         {
             Arsonist.triggerArsonistWin = true;
         }
+
+        public static void guesserShoot(byte playerId)
+        {
+            var target = Helpers.playerById(playerId);
+            if (target == null) return;
+            target.Exiled();
+            Guesser.remainingShots = Mathf.Max(0, Guesser.remainingShots - 1);
+            if (Constants.ShouldPlaySfx()) SoundManager.Instance.PlaySound(target.KillSfx, false, 0.8f);
+            if (MeetingHud.Instance)
+            {
+                foreach (var pva in MeetingHud.Instance.playerStates)
+                {
+                    if (pva.TargetPlayerId != playerId) continue;
+                    pva.SetDead(playerId == PlayerControl.LocalPlayer.PlayerId, pva.didReport, true);
+                    pva.Overlay.gameObject.SetActive(true);
+                    pva.Overlay.transform.GetChild(0).gameObject.SetActive(true);
+                }
+
+                if (AmongUsClient.Instance.AmHost) MeetingHud.Instance.CheckForEndVoting();
+            }
+
+            if (HudManager.Instance != null && Guesser.guesser != null && PlayerControl.LocalPlayer == target)
+                HudManager.Instance.KillOverlay.ShowOne(Guesser.guesser.Data, target.Data);
+        }
     }
 
     [HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.HandleRpc))]
@@ -724,8 +754,7 @@ namespace Modpack
     {
         private static void Postfix([HarmonyArgument(0)] byte callId, [HarmonyArgument(1)] MessageReader reader)
         {
-            var packetId = callId;
-            switch (packetId)
+            switch (callId)
             {
                 // Main Controls
 
@@ -756,7 +785,22 @@ namespace Modpack
                     var minor = reader.ReadByte();
                     var patch = reader.ReadByte();
                     var versionOwnerId = reader.ReadPackedInt32();
-                    RPCProcedure.versionHandshake(major, minor, patch, versionOwnerId);
+                    byte revision = 0xFF;
+                    Guid guid;
+                    if (reader.Length >= 24)
+                    {
+                        revision = reader.ReadByte();
+                        // GUID
+                        byte[] gbytes = reader.ReadBytes(16);
+                        guid = new Guid(gbytes);
+                    }
+                    else
+                    {
+                        guid = new Guid(new byte[16]);
+                    }
+
+                    RPCProcedure.versionHandshake(major, minor, patch, revision == 0xFF ? -1 : revision, guid,
+                        versionOwnerId);
                     break;
                 case (byte) CustomRPC.UseUncheckedVent:
                     var ventId = reader.ReadPackedInt32();
@@ -870,6 +914,9 @@ namespace Modpack
                     break;
                 case (byte) CustomRPC.ArsonistWin:
                     RPCProcedure.arsonistWin();
+                    break;
+                case (byte) CustomRPC.GuesserShoot:
+                    RPCProcedure.guesserShoot(reader.ReadByte());
                     break;
             }
         }

@@ -40,7 +40,7 @@ namespace Modpack
             footprint.SetActive(true);
             footprints.Add(this);
 
-            HudManager.Instance.StartCoroutine(Effects.Lerp(footprintDuration, new Action<float>((p) =>
+            HudManager.Instance.StartCoroutine(Effects.Lerp(footprintDuration, new Action<float>(p =>
             {
                 var c = color;
                 if (!anonymousFootprints && owner != null)

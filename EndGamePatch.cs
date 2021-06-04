@@ -12,7 +12,7 @@ namespace Modpack
     {
         LoversWin = 10,
         TeamJackalWin = 11,
-        ChildLose = 12,
+        MiniLose = 12,
         JesterWin = 13,
         ArsonistWin = 14
     }
@@ -24,7 +24,7 @@ namespace Modpack
         LoversSoloWin,
         JesterWin,
         JackalWin,
-        ChildLose,
+        MiniLose,
         ArsonistWin
     }
 
@@ -71,7 +71,7 @@ namespace Modpack
             {
                 var roles = RoleInfo.getRoleInfoForPlayer(playerControl);
                 var (tasksCompleted, tasksTotal) = TasksHandler.taskInfo(playerControl.Data);
-                AdditionalTempData.playerRoles.Add(new AdditionalTempData.PlayerRoleInfo()
+                AdditionalTempData.playerRoles.Add(new AdditionalTempData.PlayerRoleInfo
                 {
                     PlayerName = playerControl.Data.PlayerName, Roles = roles, TasksTotal = tasksTotal,
                     TasksCompleted = tasksCompleted
@@ -97,7 +97,7 @@ namespace Modpack
             var jesterWin = Jester.jester != null && gameOverReason == (GameOverReason) CustomGameOverReason.JesterWin;
             var arsonistWin = Arsonist.arsonist != null &&
                               gameOverReason == (GameOverReason) CustomGameOverReason.ArsonistWin;
-            var childLose = Child.child != null && gameOverReason == (GameOverReason) CustomGameOverReason.ChildLose;
+            var miniLose = Mini.mini != null && gameOverReason == (GameOverReason) CustomGameOverReason.MiniLose;
             var loversWin = Lovers.existingAndAlive() &&
                             (gameOverReason == (GameOverReason) CustomGameOverReason.LoversWin ||
                              TempData.DidHumansWin(gameOverReason) &&
@@ -107,14 +107,14 @@ namespace Modpack
                                 (Jackal.jackal != null && !Jackal.jackal.Data.IsDead ||
                                  Sidekick.sidekick != null && !Sidekick.sidekick.Data.IsDead);
 
-            // Child lose
-            if (childLose)
+            // Mini lose
+            if (miniLose)
             {
                 TempData.winners = new Il2CppSystem.Collections.Generic.List<WinningPlayerData>();
-                var wpd = new WinningPlayerData(Child.child.Data) {IsYou = false};
-                // If "no one is the Child", it will display the Child, but also show defeat to everyone
+                var wpd = new WinningPlayerData(Mini.mini.Data) {IsYou = false};
+                // If "no one is the Mini", it will display the Mini, but also show defeat to everyone
                 TempData.winners.Add(wpd);
-                AdditionalTempData.winCondition = WinCondition.ChildLose;
+                AdditionalTempData.winCondition = WinCondition.MiniLose;
             }
 
             // Jester win
@@ -170,11 +170,13 @@ namespace Modpack
                 AdditionalTempData.winCondition = WinCondition.JackalWin;
                 TempData.winners = new Il2CppSystem.Collections.Generic.List<WinningPlayerData>();
                 var wpd = new WinningPlayerData(Jackal.jackal.Data) {IsImpostor = false};
+
                 TempData.winners.Add(wpd);
                 // If there is a sidekick. The sidekick also wins
                 if (Sidekick.sidekick != null)
                 {
                     var wpdSidekick = new WinningPlayerData(Sidekick.sidekick.Data) {IsImpostor = false};
+
                     TempData.winners.Add(wpdSidekick);
                 }
 
@@ -200,8 +202,7 @@ namespace Modpack
         {
             var bonusText = UnityEngine.Object.Instantiate(__instance.WinText.gameObject);
             var position1 = __instance.WinText.transform.position;
-            bonusText.transform.position = new Vector3(position1.x,
-                position1.y - 0.8f, position1.z);
+            bonusText.transform.position = new Vector3(position1.x, position1.y - 0.8f, position1.z);
             bonusText.transform.localScale = new Vector3(0.7f, 0.7f, 1f);
             var textRenderer = bonusText.GetComponent<TMPro.TMP_Text>();
             textRenderer.text = "";
@@ -230,9 +231,9 @@ namespace Modpack
                     textRenderer.text = "Team Jackal Wins";
                     textRenderer.color = Jackal.color;
                     break;
-                case WinCondition.ChildLose:
-                    textRenderer.text = "Child died";
-                    textRenderer.color = Child.color;
+                case WinCondition.MiniLose:
+                    textRenderer.text = "Mini died";
+                    textRenderer.color = Mini.color;
                     break;
             }
 
@@ -285,7 +286,7 @@ namespace Modpack
                 .InstanceExists) // InstanceExists | Don't check Custom Criteria when in Tutorial
                 return true;
             var statistics = new PlayerStatistics(__instance);
-            if (CheckAndEndGameForChildLose(__instance)) return false;
+            if (CheckAndEndGameForMiniLose(__instance)) return false;
             if (CheckAndEndGameForJesterWin(__instance)) return false;
             if (CheckAndEndGameForArsonistWin(__instance)) return false;
             if (CheckAndEndGameForSabotageWin(__instance)) return false;
@@ -296,15 +297,15 @@ namespace Modpack
             return CheckAndEndGameForCrewmateWin(__instance, statistics) && false;
         }
 
-        private static bool CheckAndEndGameForChildLose(ShipStatus __instance)
+        private static bool CheckAndEndGameForMiniLose(Behaviour __instance)
         {
-            if (!Child.triggerChildLose) return false;
+            if (!Mini.triggerMiniLose) return false;
             __instance.enabled = false;
-            ShipStatus.RpcEndGame((GameOverReason) CustomGameOverReason.ChildLose, false);
+            ShipStatus.RpcEndGame((GameOverReason) CustomGameOverReason.MiniLose, false);
             return true;
         }
 
-        private static bool CheckAndEndGameForJesterWin(ShipStatus __instance)
+        private static bool CheckAndEndGameForJesterWin(Behaviour __instance)
         {
             if (!Jester.triggerJesterWin) return false;
             __instance.enabled = false;
@@ -312,7 +313,7 @@ namespace Modpack
             return true;
         }
 
-        private static bool CheckAndEndGameForArsonistWin(ShipStatus __instance)
+        private static bool CheckAndEndGameForArsonistWin(Behaviour __instance)
         {
             if (!Arsonist.triggerArsonistWin) return false;
             __instance.enabled = false;
@@ -335,11 +336,11 @@ namespace Modpack
             }
 
             var systemType2 = (__instance.Systems.ContainsKey(SystemTypes.Reactor)
-                ? __instance.Systems[SystemTypes.Reactor]
-                : null) ?? (__instance.Systems.ContainsKey(SystemTypes.Laboratory)
-                ? __instance.Systems[SystemTypes.Laboratory]
-                : null);
-
+                                  ? __instance.Systems[SystemTypes.Reactor]
+                                  : null) ??
+                              (__instance.Systems.ContainsKey(SystemTypes.Laboratory)
+                                  ? __instance.Systems[SystemTypes.Laboratory]
+                                  : null);
             var criticalSystem = systemType2?.TryCast<ICriticalSabotage>();
             if (criticalSystem == null || !(criticalSystem.Countdown < 0f)) return false;
             EndGameForSabotage(__instance);
@@ -347,7 +348,7 @@ namespace Modpack
             return true;
         }
 
-        private static bool CheckAndEndGameForTaskWin(ShipStatus __instance)
+        private static bool CheckAndEndGameForTaskWin(Behaviour __instance)
         {
             if (GameData.Instance.TotalTasks > GameData.Instance.CompletedTasks) return false;
             __instance.enabled = false;
@@ -355,7 +356,7 @@ namespace Modpack
             return true;
         }
 
-        private static bool CheckAndEndGameForLoverWin(ShipStatus __instance, PlayerStatistics statistics)
+        private static bool CheckAndEndGameForLoverWin(Behaviour __instance, PlayerStatistics statistics)
         {
             if (statistics.TeamLoversAlive != 2 || statistics.TotalAlive > 3) return false;
             __instance.enabled = false;
@@ -363,7 +364,7 @@ namespace Modpack
             return true;
         }
 
-        private static bool CheckAndEndGameForJackalWin(ShipStatus __instance, PlayerStatistics statistics)
+        private static bool CheckAndEndGameForJackalWin(Behaviour __instance, PlayerStatistics statistics)
         {
             if (statistics.TeamJackalAlive < statistics.TotalAlive - statistics.TeamJackalAlive ||
                 statistics.TeamImpostorsAlive != 0 ||
@@ -373,7 +374,7 @@ namespace Modpack
             return true;
         }
 
-        private static bool CheckAndEndGameForImpostorWin(ShipStatus __instance, PlayerStatistics statistics)
+        private static bool CheckAndEndGameForImpostorWin(Behaviour __instance, PlayerStatistics statistics)
         {
             if (statistics.TeamImpostorsAlive < statistics.TotalAlive - statistics.TeamImpostorsAlive ||
                 statistics.TeamJackalAlive != 0 ||
@@ -385,12 +386,11 @@ namespace Modpack
                 DeathReason.Kill => GameOverReason.ImpostorByKill,
                 _ => GameOverReason.ImpostorByVote
             };
-
             ShipStatus.RpcEndGame(endReason, false);
             return true;
         }
 
-        private static bool CheckAndEndGameForCrewmateWin(ShipStatus __instance, PlayerStatistics statistics)
+        private static bool CheckAndEndGameForCrewmateWin(Behaviour __instance, PlayerStatistics statistics)
         {
             if (statistics.TeamImpostorsAlive != 0 || statistics.TeamJackalAlive != 0) return false;
             __instance.enabled = false;
@@ -398,7 +398,7 @@ namespace Modpack
             return true;
         }
 
-        private static void EndGameForSabotage(ShipStatus __instance)
+        private static void EndGameForSabotage(Behaviour __instance)
         {
             __instance.enabled = false;
             ShipStatus.RpcEndGame(GameOverReason.ImpostorBySabotage, false);

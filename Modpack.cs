@@ -31,7 +31,7 @@ namespace Modpack
             Morphling.clearAndReload();
             Camouflager.clearAndReload();
             Hacker.clearAndReload();
-            Child.clearAndReload();
+            Mini.clearAndReload();
             Tracker.clearAndReload();
             Vampire.clearAndReload();
             Snitch.clearAndReload();
@@ -49,7 +49,7 @@ namespace Modpack
         public static class Jester
         {
             public static PlayerControl jester;
-            public static Color color = new Color(255f / 255f, 84f / 255f, 167f / 255f, 1);
+            public static Color color = new Color32(236, 98, 165, byte.MaxValue);
 
             public static bool triggerJesterWin;
             public static bool canCallEmergency = true;
@@ -67,7 +67,7 @@ namespace Modpack
         public static class Mayor
         {
             public static PlayerControl mayor;
-            public static Color color = new Color(105f / 255f, 58f / 255f, 58f / 255f, 1);
+            public static Color color = new Color32(32, 77, 66, byte.MaxValue);
 
             public static void clearAndReload()
             {
@@ -78,7 +78,7 @@ namespace Modpack
         public static class Engineer
         {
             public static PlayerControl engineer;
-            public static Color color = new Color(98f / 255f, 216f / 255f, 240f / 255f, 1);
+            public static Color color = new Color32(0, 40, 245, byte.MaxValue);
             public static bool usedRepair;
             private static Sprite buttonSprite;
 
@@ -145,7 +145,7 @@ namespace Modpack
         public static class Sheriff
         {
             public static PlayerControl sheriff;
-            public static Color color = new Color(255f / 255f, 204f / 255f, 0f / 255f, 1);
+            public static Color color = new Color32(248, 205, 70, byte.MaxValue);
 
             public static float cooldown = 30f;
             public static bool canKillNeutrals;
@@ -166,7 +166,7 @@ namespace Modpack
         public static class Lighter
         {
             public static PlayerControl lighter;
-            public static Color color = new Color(250f / 255f, 204f / 255f, 37f / 255f, 1);
+            public static Color color = new Color32(238, 229, 190, byte.MaxValue);
 
             public static float lighterModeLightsOnVision = 2f;
             public static float lighterModeLightsOffVision = 0.75f;
@@ -199,7 +199,7 @@ namespace Modpack
         public static class Detective
         {
             public static PlayerControl detective;
-            public static Color color = new Color(2f / 255f, 61f / 255f, 156f / 255f, 1);
+            public static Color color = new Color32(45, 106, 165, byte.MaxValue);
 
             public static float footprintIntervall = 1f;
             public static float footprintDuration = 1f;
@@ -224,9 +224,8 @@ namespace Modpack
     public static class TimeMaster
     {
         public static PlayerControl timeMaster;
-        public static Color color = new Color(114f / 255f, 234f / 255f, 247f / 255f, 1);
+        public static Color color = new Color32(112, 142, 239, byte.MaxValue);
 
-        public static bool reviveDuringRewind = false;
         public static float rewindTime = 3f;
         public static float shieldDuration = 3f;
         public static float cooldown = 30f;
@@ -258,13 +257,13 @@ namespace Modpack
     {
         public static PlayerControl medic;
         public static PlayerControl shielded;
-        public static Color color = new Color(0f / 255f, 80f / 255f, 105f / 255f, 1);
+        public static Color color = new Color32(126, 251, 194, byte.MaxValue);
         public static bool usedShield;
 
         public static int showShielded;
         public static bool showAttemptToShielded;
 
-        public static Color shieldedColor = new Color(0f / 255f, 221f / 255f, 255f / 255f, 1);
+        public static Color shieldedColor = new Color32(0, 221, 255, byte.MaxValue);
         public static PlayerControl currentTarget;
 
         private static Sprite buttonSprite;
@@ -282,7 +281,6 @@ namespace Modpack
             shielded = null;
             currentTarget = null;
             usedShield = false;
-            shieldedColor = new Color(0f / 255f, 221f / 255f, 255f / 255f, 1);
             showShielded = CustomOptionHolder.medicShowShielded.getSelection();
             showAttemptToShielded = CustomOptionHolder.medicShowAttemptToShielded.getBool();
         }
@@ -291,7 +289,7 @@ namespace Modpack
     public static class Shifter
     {
         public static PlayerControl shifter;
-        public static Color color = new Color(90f / 255f, 90f / 255f, 90f / 255f, 1);
+        public static Color color = new Color32(102, 102, 102, byte.MaxValue);
 
         public static PlayerControl futureShift;
         public static PlayerControl currentTarget;
@@ -316,7 +314,7 @@ namespace Modpack
     public static class Swapper
     {
         public static PlayerControl swapper;
-        public static Color color = new Color(240f / 255f, 128f / 255f, 72f / 255f, 1);
+        public static Color color = new Color32(134, 55, 86, byte.MaxValue);
         private static Sprite spriteCheck;
         public static bool canCallEmergency;
         public static bool canOnlySwapOthers;
@@ -345,7 +343,7 @@ namespace Modpack
     {
         public static PlayerControl lover1;
         public static PlayerControl lover2;
-        public static Color color = new Color(252f / 255f, 3f / 255f, 190f / 255f, 1);
+        public static Color color = new Color32(232, 57, 185, byte.MaxValue);
 
         public static bool bothDie = true;
 
@@ -389,7 +387,7 @@ namespace Modpack
     public static class Seer
     {
         public static PlayerControl seer;
-        public static Color color = new Color(60f / 255f, 181f / 255f, 100f / 255f, 1);
+        public static Color color = new Color32(97, 178, 108, byte.MaxValue);
         public static List<Vector3> deadBodyPositions = new List<Vector3>();
 
         public static float soulDuration = 15f;
@@ -517,7 +515,7 @@ namespace Modpack
     public static class Hacker
     {
         public static PlayerControl hacker;
-        public static Color color = new Color(252f / 255f, 90f / 255f, 30f / 255f, 1);
+        public static Color color = new Color32(117, 250, 76, byte.MaxValue);
 
         public static float cooldown = 30f;
         public static float duration = 10f;
@@ -543,22 +541,22 @@ namespace Modpack
         }
     }
 
-    public static class Child
+    public static class Mini
     {
-        public static PlayerControl child;
+        public static PlayerControl mini;
         public static Color color = Color.white;
         public const float defaultColliderRadius = 0.2233912f;
         public const float defaultColliderOffset = 0.3636057f;
 
         public static float growingUpDuration = 400f;
         public static DateTime timeOfGrowthStart = DateTime.UtcNow;
-        public static bool triggerChildLose;
+        public static bool triggerMiniLose;
 
         public static void clearAndReload()
         {
-            child = null;
-            triggerChildLose = false;
-            growingUpDuration = CustomOptionHolder.childGrowingUpDuration.getFloat();
+            mini = null;
+            triggerMiniLose = false;
+            growingUpDuration = CustomOptionHolder.miniGrowingUpDuration.getFloat();
             timeOfGrowthStart = DateTime.UtcNow;
         }
 
@@ -577,7 +575,7 @@ namespace Modpack
     public static class Tracker
     {
         public static PlayerControl tracker;
-        public static Color color = new Color(117f / 255f, 209f / 255f, 255f / 255f, 1);
+        public static Color color = new Color32(100, 58, 220, byte.MaxValue);
 
         public static float updateIntervall = 5f;
 
@@ -660,7 +658,7 @@ namespace Modpack
     public static class Snitch
     {
         public static PlayerControl snitch;
-        public static Color color = new Color(227f / 255f, 251f / 255f, 47f / 255f, 1);
+        public static Color color = new Color32(184, 251, 79, byte.MaxValue);
 
         public static List<Arrow> localArrows = new List<Arrow>();
         public static int taskCountForImpostors = 1;
@@ -682,7 +680,7 @@ namespace Modpack
     public static class Jackal
     {
         public static PlayerControl jackal;
-        public static Color color = new Color(0f / 255f, 180f / 255f, 235f / 255f, 1);
+        public static Color color = new Color32(0, 180, 235, byte.MaxValue);
         public static PlayerControl fakeSidekick;
 
         public static PlayerControl currentTarget;
@@ -734,7 +732,7 @@ namespace Modpack
     public static class Sidekick
     {
         public static PlayerControl sidekick;
-        public static Color color = new Color(0f / 255f, 180f / 255f, 235f / 255f, 1);
+        public static Color color = new Color32(0, 180, 235, byte.MaxValue);
 
         public static PlayerControl currentTarget;
 
@@ -930,7 +928,7 @@ namespace Modpack
     public static class SecurityGuard
     {
         public static PlayerControl securityGuard;
-        public static Color color = new Color(171 / 255f, 159f / 255f, 55f / 255f, 1f);
+        public static Color color = new Color32(195, 178, 95, byte.MaxValue);
 
         public static float cooldown = 30f;
         public static int remainingScrews = 7;
@@ -992,7 +990,7 @@ namespace Modpack
     public static class Arsonist
     {
         public static PlayerControl arsonist;
-        public static Color color = new Color(1, 200f / 255f, 0, 1f);
+        public static Color color = new Color32(238, 112, 46, byte.MaxValue);
 
         public static float cooldown = 30f;
         public static float duration = 3f;
@@ -1045,6 +1043,29 @@ namespace Modpack
             dousedIcons = new Dictionary<byte, PoolablePlayer>();
             cooldown = CustomOptionHolder.arsonistCooldown.getFloat();
             duration = CustomOptionHolder.arsonistDuration.getFloat();
+        }
+    }
+
+    public static class Guesser
+    {
+        public static PlayerControl guesser;
+        public static Color color = new Color32(255, 255, 0, byte.MaxValue);
+        private static Sprite targetSprite;
+
+        public static int remainingShots = 2;
+
+        public static Sprite getTargetSprite()
+        {
+            if (targetSprite) return targetSprite;
+            targetSprite = Helpers.loadSpriteFromResources("Modpack.Resources.TargetIcon.png", 150f);
+            return targetSprite;
+        }
+
+        public static void clearAndReload()
+        {
+            guesser = null;
+
+            remainingShots = Mathf.RoundToInt(CustomOptionHolder.guesserNumberOfShots.getFloat());
         }
     }
 }

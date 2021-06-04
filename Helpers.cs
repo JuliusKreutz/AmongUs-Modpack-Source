@@ -49,26 +49,6 @@ namespace Modpack
             return null;
         }
 
-        public static Texture2D loadTextureFromDisk(string path)
-        {
-            try
-            {
-                if (File.Exists(path))
-                {
-                    var texture = new Texture2D(2, 2, TextureFormat.ARGB32, true);
-                    byte[] byteTexture = File.ReadAllBytes(path);
-                    LoadImage(texture, byteTexture, false);
-                    return texture;
-                }
-            }
-            catch
-            {
-                System.Console.WriteLine("Error loading texture from disk: " + path);
-            }
-
-            return null;
-        }
-
         internal delegate bool d_LoadImage(IntPtr tex, IntPtr data, bool markNonReadable);
 
         internal static d_LoadImage iCall_LoadImage;
@@ -132,9 +112,9 @@ namespace Modpack
 
                 return false;
             }
-            // Block impostor not fully grown child kill
 
-            if (Child.child != null && target == Child.child && !Child.isGrownUp())
+            // Block impostor not fully grown mini kill
+            if (Mini.mini != null && target == Mini.mini && !Mini.isGrownUp())
             {
                 return false;
             }

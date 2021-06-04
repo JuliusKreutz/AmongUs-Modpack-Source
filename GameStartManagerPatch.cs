@@ -1,14 +1,15 @@
 using HarmonyLib;
 using UnityEngine;
+using System.Reflection;
 using System.Collections.Generic;
-using Hazel;
+using System;
 using UnhollowerBaseLib;
 
 namespace Modpack
 {
     public class GameStartManagerPatch
     {
-        public static readonly Dictionary<int, System.Version> playerVersions = new Dictionary<int, System.Version>();
+        public static readonly Dictionary<int, PlayerVersion> playerVersions = new Dictionary<int, PlayerVersion>();
         private static float timer = 600f;
         private static bool versionSent;
         private static string lobbyCodeText = "";
@@ -56,14 +57,18 @@ namespace Modpack
                 {
                     versionSent = true;
                     var writer = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId,
-                        (byte) CustomRPC.VersionHandshake, SendOption.Reliable, -1);
+                        (byte) CustomRPC.VersionHandshake, Hazel.SendOption.Reliable, -1);
                     writer.Write((byte) ModpackPlugin.Version.Major);
                     writer.Write((byte) ModpackPlugin.Version.Minor);
                     writer.Write((byte) ModpackPlugin.Version.Build);
                     writer.WritePacked(AmongUsClient.Instance.ClientId);
+                    writer.Write((byte) (ModpackPlugin.Version.Revision < 0 ? 0xFF : ModpackPlugin.Version.Revision));
+                    writer.Write(Assembly.GetExecutingAssembly().ManifestModule.ModuleVersionId.ToByteArray());
                     AmongUsClient.Instance.FinishRpcImmediately(writer);
                     RPCProcedure.versionHandshake(ModpackPlugin.Version.Major, ModpackPlugin.Version.Minor,
-                        ModpackPlugin.Version.Build, AmongUsClient.Instance.ClientId);
+                        ModpackPlugin.Version.Build, ModpackPlugin.Version.Revision,
+                        Assembly.GetExecutingAssembly().ManifestModule.ModuleVersionId,
+                        AmongUsClient.Instance.ClientId);
                 }
 
                 if (kc < ks.Length && Input.GetKeyDown(ks[kc]))
@@ -117,17 +122,25 @@ namespace Modpack
                         }
                         else
                         {
-                            var diff = ModpackPlugin.Version.CompareTo(playerVersions[client.Id]);
+                            var PV = playerVersions[client.Id];
+                            var diff = ModpackPlugin.Version.CompareTo(PV.version);
                             if (diff > 0)
                             {
                                 message +=
-                                    $"<color=#FF0000FF>{client.Character.Data.PlayerName} has an older version of The Other Roles (v{playerVersions[client.Id]})\n</color>";
+                                    $"<color=#FF0000FF>{client.Character.Data.PlayerName} has an older version of The Other Roles (v{playerVersions[client.Id].version})\n</color>";
                                 blockStart = true;
                             }
                             else if (diff < 0)
                             {
                                 message +=
-                                    $"<color=#FF0000FF>{client.Character.Data.PlayerName} has a newer version of The Other Roles (v{playerVersions[client.Id]}) \n</color>";
+                                    $"<color=#FF0000FF>{client.Character.Data.PlayerName} has a newer version of The Other Roles (v{playerVersions[client.Id].version})\n</color>";
+                                blockStart = true;
+                            }
+                            else if (!PV.GuidMatches())
+                            {
+                                // version presumably matches, check if Guid matches
+                                message +=
+                                    $"<color=#FF0000FF>{client.Character.Data.PlayerName} has a modified version of TOR v{playerVersions[client.Id].version} <size=30%>({PV.guid.ToString()})</size>\n</color>";
                                 blockStart = true;
                             }
                         }
@@ -173,8 +186,37 @@ namespace Modpack
         {
             public static bool Prefix(GameStartManager __instance)
             {
+                // Block game start if not everyone has the same mod version
                 const bool continueStart = true;
+
+                // Allow the start for this version to test the feature, blocking it with the next version
+                // if (AmongUsClient.Instance.AmHost) {
+                //     foreach (InnerNet.ClientData client in AmongUsClient.Instance.allClients) {
+                //         if (client.Character == null) continue;
+                //         var dummyComponent = client.Character.GetComponent<DummyBehaviour>();
+                //         if (dummyComponent != null && dummyComponent.enabled) continue;
+                //         if (!playerVersions.ContainsKey(client.Id) || (playerVersions[client.Id].Item1 != ModpackPlugin.Major || playerVersions[client.Id].Item2 != ModpackPlugin.Minor || playerVersions[client.Id].Item3 != ModpackPlugin.Patch))
+                //             continueStart = false;
+                //     }
+                // }
                 return continueStart;
+            }
+        }
+
+        public class PlayerVersion
+        {
+            public readonly Version version;
+            public readonly Guid guid;
+
+            public PlayerVersion(Version version, Guid guid)
+            {
+                this.version = version;
+                this.guid = guid;
+            }
+
+            public bool GuidMatches()
+            {
+                return Assembly.GetExecutingAssembly().ManifestModule.ModuleVersionId.Equals(guid);
             }
         }
     }

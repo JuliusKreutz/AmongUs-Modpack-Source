@@ -1,5 +1,4 @@
 using HarmonyLib;
-using Hazel;
 using System;
 using System.Linq;
 using UnityEngine;
@@ -91,7 +90,7 @@ namespace Modpack
                     engineerRepairButton.Timer = 0f;
 
                     var usedRepairWriter = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId,
-                        (byte) CustomRPC.EngineerUsedRepair, SendOption.Reliable, -1);
+                        (byte) CustomRPC.EngineerUsedRepair, Hazel.SendOption.Reliable, -1);
                     AmongUsClient.Instance.FinishRpcImmediately(usedRepairWriter);
                     RPCProcedure.engineerUsedRepair();
 
@@ -102,7 +101,7 @@ namespace Modpack
                             case TaskTypes.FixLights:
                             {
                                 var writer = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId,
-                                    (byte) CustomRPC.EngineerFixLights, SendOption.Reliable, -1);
+                                    (byte) CustomRPC.EngineerFixLights, Hazel.SendOption.Reliable, -1);
                                 AmongUsClient.Instance.FinishRpcImmediately(writer);
                                 RPCProcedure.engineerFixLights();
                                 break;
@@ -166,7 +165,7 @@ namespace Modpack
                         var playerInfo = GameData.Instance.GetPlayerById(component.ParentId);
 
                         var writer = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId,
-                            (byte) CustomRPC.CleanBody, SendOption.Reliable, -1);
+                            (byte) CustomRPC.CleanBody, Hazel.SendOption.Reliable, -1);
                         writer.Write(playerInfo.PlayerId);
                         AmongUsClient.Instance.FinishRpcImmediately(writer);
                         RPCProcedure.cleanBody(playerInfo.PlayerId);
@@ -193,7 +192,7 @@ namespace Modpack
                     if (Medic.shielded != null && Medic.shielded == Sheriff.currentTarget)
                     {
                         var attemptWriter = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId,
-                            (byte) CustomRPC.ShieldedMurderAttempt, SendOption.Reliable, -1);
+                            (byte) CustomRPC.ShieldedMurderAttempt, Hazel.SendOption.Reliable, -1);
                         AmongUsClient.Instance.FinishRpcImmediately(attemptWriter);
                         RPCProcedure.shieldedMurderAttempt();
                         return;
@@ -201,7 +200,7 @@ namespace Modpack
 
                     byte targetId = 0;
                     if (Sheriff.currentTarget.Data.IsImpostor &&
-                        (Sheriff.currentTarget != Child.child || Child.isGrownUp()) ||
+                        (Sheriff.currentTarget != Mini.mini || Mini.isGrownUp()) ||
                         Sheriff.spyCanDieToSheriff && Spy.spy == Sheriff.currentTarget ||
                         Sheriff.canKillNeutrals && (Arsonist.arsonist == Sheriff.currentTarget ||
                                                     Jester.jester == Sheriff.currentTarget ||
@@ -216,7 +215,7 @@ namespace Modpack
                     }
 
                     var killWriter = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId,
-                        (byte) CustomRPC.SheriffKill, SendOption.Reliable, -1);
+                        (byte) CustomRPC.SheriffKill, Hazel.SendOption.Reliable, -1);
                     killWriter.Write(targetId);
                     AmongUsClient.Instance.FinishRpcImmediately(killWriter);
                     RPCProcedure.sheriffKill(targetId);
@@ -239,7 +238,7 @@ namespace Modpack
                 () =>
                 {
                     var writer = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId,
-                        (byte) CustomRPC.TimeMasterShield, SendOption.Reliable, -1);
+                        (byte) CustomRPC.TimeMasterShield, Hazel.SendOption.Reliable, -1);
                     AmongUsClient.Instance.FinishRpcImmediately(writer);
                     RPCProcedure.timeMasterShield();
                 },
@@ -268,7 +267,7 @@ namespace Modpack
                     medicShieldButton.Timer = 0f;
 
                     var writer = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId,
-                        (byte) CustomRPC.MedicSetShielded, SendOption.Reliable, -1);
+                        (byte) CustomRPC.MedicSetShielded, Hazel.SendOption.Reliable, -1);
                     writer.Write(Medic.currentTarget.PlayerId);
                     AmongUsClient.Instance.FinishRpcImmediately(writer);
                     RPCProcedure.medicSetShielded(Medic.currentTarget.PlayerId);
@@ -289,7 +288,7 @@ namespace Modpack
                 () =>
                 {
                     var writer = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId,
-                        (byte) CustomRPC.SetFutureShifted, SendOption.Reliable, -1);
+                        (byte) CustomRPC.SetFutureShifted, Hazel.SendOption.Reliable, -1);
                     writer.Write(Shifter.currentTarget.PlayerId);
                     AmongUsClient.Instance.FinishRpcImmediately(writer);
                     RPCProcedure.setFutureShifted(Shifter.currentTarget.PlayerId);
@@ -311,7 +310,7 @@ namespace Modpack
                     if (Morphling.sampledTarget != null)
                     {
                         var writer = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId,
-                            (byte) CustomRPC.MorphlingMorph, SendOption.Reliable, -1);
+                            (byte) CustomRPC.MorphlingMorph, Hazel.SendOption.Reliable, -1);
                         writer.Write(Morphling.sampledTarget.PlayerId);
                         AmongUsClient.Instance.FinishRpcImmediately(writer);
                         RPCProcedure.morphlingMorph(Morphling.sampledTarget.PlayerId);
@@ -355,7 +354,7 @@ namespace Modpack
                 () =>
                 {
                     var writer = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId,
-                        (byte) CustomRPC.CamouflagerCamouflage, SendOption.Reliable, -1);
+                        (byte) CustomRPC.CamouflagerCamouflage, Hazel.SendOption.Reliable, -1);
                     AmongUsClient.Instance.FinishRpcImmediately(writer);
                     RPCProcedure.camouflagerCamouflage();
                 },
@@ -403,7 +402,7 @@ namespace Modpack
                 () =>
                 {
                     var writer = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId,
-                        (byte) CustomRPC.TrackerUsedTracker, SendOption.Reliable, -1);
+                        (byte) CustomRPC.TrackerUsedTracker, Hazel.SendOption.Reliable, -1);
                     writer.Write(Tracker.currentTarget.PlayerId);
                     AmongUsClient.Instance.FinishRpcImmediately(writer);
                     RPCProcedure.trackerUsedTracker(Tracker.currentTarget.PlayerId);
@@ -426,7 +425,7 @@ namespace Modpack
                         if (Vampire.targetNearGarlic)
                         {
                             var writer = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId,
-                                (byte) CustomRPC.UncheckedMurderPlayer, SendOption.Reliable, -1);
+                                (byte) CustomRPC.UncheckedMurderPlayer, Hazel.SendOption.Reliable, -1);
                             writer.Write(Vampire.vampire.PlayerId);
                             writer.Write(Vampire.currentTarget.PlayerId);
                             AmongUsClient.Instance.FinishRpcImmediately(writer);
@@ -441,13 +440,13 @@ namespace Modpack
                             Vampire.bitten = Vampire.currentTarget;
                             // Notify players about bitten
                             var writer = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId,
-                                (byte) CustomRPC.VampireSetBitten, SendOption.Reliable, -1);
+                                (byte) CustomRPC.VampireSetBitten, Hazel.SendOption.Reliable, -1);
                             writer.Write(Vampire.bitten.PlayerId);
                             writer.Write(0);
                             AmongUsClient.Instance.FinishRpcImmediately(writer);
                             RPCProcedure.vampireSetBitten(Vampire.bitten.PlayerId, 0);
 
-                            HudManager.Instance.StartCoroutine(Effects.Lerp(Vampire.delay, new Action<float>((p) =>
+                            HudManager.Instance.StartCoroutine(Effects.Lerp(Vampire.delay, new Action<float>(p =>
                             {
                                 // Delayed action
                                 if (p != 1f) return;
@@ -457,19 +456,19 @@ namespace Modpack
                                     // Perform kill
                                     var killWriter = AmongUsClient.Instance.StartRpcImmediately(
                                         PlayerControl.LocalPlayer.NetId, (byte) CustomRPC.VampireTryKill,
-                                        SendOption.Reliable, -1);
+                                        Hazel.SendOption.Reliable, -1);
                                     AmongUsClient.Instance.FinishRpcImmediately(killWriter);
                                     RPCProcedure.vampireTryKill();
                                 }
                                 else
                                 {
                                     // Notify players about clearing bitten
-                                    var rpcWriter = AmongUsClient.Instance.StartRpcImmediately(
+                                    var messageWriter = AmongUsClient.Instance.StartRpcImmediately(
                                         PlayerControl.LocalPlayer.NetId, (byte) CustomRPC.VampireSetBitten,
-                                        SendOption.Reliable, -1);
-                                    rpcWriter.Write(byte.MaxValue);
-                                    rpcWriter.Write(byte.MaxValue);
-                                    AmongUsClient.Instance.FinishRpcImmediately(rpcWriter);
+                                        Hazel.SendOption.Reliable, -1);
+                                    messageWriter.Write(byte.MaxValue);
+                                    messageWriter.Write(byte.MaxValue);
+                                    AmongUsClient.Instance.FinishRpcImmediately(messageWriter);
                                     RPCProcedure.vampireSetBitten(byte.MaxValue, byte.MaxValue);
                                 }
                             })));
@@ -518,7 +517,7 @@ namespace Modpack
                     Buffer.BlockCopy(BitConverter.GetBytes(pos.y), 0, buff, 1 * sizeof(float), sizeof(float));
 
                     var writer = AmongUsClient.Instance.StartRpc(PlayerControl.LocalPlayer.NetId,
-                        (byte) CustomRPC.PlaceGarlic, SendOption.Reliable);
+                        (byte) CustomRPC.PlaceGarlic, Hazel.SendOption.Reliable);
                     writer.WriteBytesAndSize(buff);
                     writer.EndMessage();
                     RPCProcedure.placeGarlic(buff);
@@ -539,7 +538,7 @@ namespace Modpack
                 () =>
                 {
                     var writer = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId,
-                        (byte) CustomRPC.JackalCreatesSidekick, SendOption.Reliable, -1);
+                        (byte) CustomRPC.JackalCreatesSidekick, Hazel.SendOption.Reliable, -1);
                     writer.Write(Jackal.currentTarget.PlayerId);
                     AmongUsClient.Instance.FinishRpcImmediately(writer);
                     RPCProcedure.jackalCreatesSidekick(Jackal.currentTarget.PlayerId);
@@ -564,7 +563,7 @@ namespace Modpack
                     if (!Helpers.handleMurderAttempt(Jackal.currentTarget)) return;
                     var targetId = Jackal.currentTarget.PlayerId;
                     var killWriter = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId,
-                        (byte) CustomRPC.JackalKill, SendOption.Reliable, -1);
+                        (byte) CustomRPC.JackalKill, Hazel.SendOption.Reliable, -1);
                     killWriter.Write(targetId);
                     AmongUsClient.Instance.FinishRpcImmediately(killWriter);
                     RPCProcedure.jackalKill(targetId);
@@ -588,7 +587,7 @@ namespace Modpack
                     if (!Helpers.handleMurderAttempt(Sidekick.currentTarget)) return;
                     var targetId = Sidekick.currentTarget.PlayerId;
                     var killWriter = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId,
-                        (byte) CustomRPC.SidekickKill, SendOption.Reliable, -1);
+                        (byte) CustomRPC.SidekickKill, Hazel.SendOption.Reliable, -1);
                     killWriter.Write(targetId);
                     AmongUsClient.Instance.FinishRpcImmediately(killWriter);
                     RPCProcedure.sidekickKill(targetId);
@@ -635,7 +634,7 @@ namespace Modpack
                     eraserButton.Timer = eraserButton.MaxTimer;
 
                     var writer = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId,
-                        (byte) CustomRPC.SetFutureErased, SendOption.Reliable, -1);
+                        (byte) CustomRPC.SetFutureErased, Hazel.SendOption.Reliable, -1);
                     writer.Write(Eraser.currentTarget.PlayerId);
                     AmongUsClient.Instance.FinishRpcImmediately(writer);
                     RPCProcedure.setFutureErased(Eraser.currentTarget.PlayerId);
@@ -661,7 +660,7 @@ namespace Modpack
                     Buffer.BlockCopy(BitConverter.GetBytes(pos.y), 0, buff, 1 * sizeof(float), sizeof(float));
 
                     var writer = AmongUsClient.Instance.StartRpc(PlayerControl.LocalPlayer.NetId,
-                        (byte) CustomRPC.PlaceJackInTheBox, SendOption.Reliable);
+                        (byte) CustomRPC.PlaceJackInTheBox, Hazel.SendOption.Reliable);
                     writer.WriteBytesAndSize(buff);
                     writer.EndMessage();
                     RPCProcedure.placeJackInTheBox(buff);
@@ -680,7 +679,7 @@ namespace Modpack
                 () =>
                 {
                     var writer = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId,
-                        (byte) CustomRPC.LightsOut, SendOption.Reliable, -1);
+                        (byte) CustomRPC.LightsOut, Hazel.SendOption.Reliable, -1);
                     AmongUsClient.Instance.FinishRpcImmediately(writer);
                     RPCProcedure.lightsOut();
                 },
@@ -722,7 +721,7 @@ namespace Modpack
                         var playerInfo = GameData.Instance.GetPlayerById(component.ParentId);
 
                         var writer = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId,
-                            (byte) CustomRPC.CleanBody, SendOption.Reliable, -1);
+                            (byte) CustomRPC.CleanBody, Hazel.SendOption.Reliable, -1);
                         writer.Write(playerInfo.PlayerId);
                         AmongUsClient.Instance.FinishRpcImmediately(writer);
                         RPCProcedure.cleanBody(playerInfo.PlayerId);
@@ -760,7 +759,7 @@ namespace Modpack
                         Warlock.curseKillTarget = Warlock.curseVictimTarget;
 
                         var writer = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId,
-                            (byte) CustomRPC.WarlockCurseKill, SendOption.Reliable, -1);
+                            (byte) CustomRPC.WarlockCurseKill, Hazel.SendOption.Reliable, -1);
                         writer.Write(Warlock.curseKillTarget.PlayerId);
                         AmongUsClient.Instance.FinishRpcImmediately(writer);
                         RPCProcedure.warlockCurseKill(Warlock.curseKillTarget.PlayerId);
@@ -774,7 +773,7 @@ namespace Modpack
                         PlayerControl.LocalPlayer.moveable = false;
                         PlayerControl.LocalPlayer.NetTransform
                             .Halt(); // Stop current movement so the warlock is not just running straight into the next object
-                        HudManager.Instance.StartCoroutine(Effects.Lerp(Warlock.rootTime, new Action<float>((p) =>
+                        HudManager.Instance.StartCoroutine(Effects.Lerp(Warlock.rootTime, new Action<float>(p =>
                         {
                             // Delayed action
                             if (p == 1f)
@@ -810,7 +809,7 @@ namespace Modpack
                     {
                         // Seal vent
                         var writer = AmongUsClient.Instance.StartRpc(PlayerControl.LocalPlayer.NetId,
-                            (byte) CustomRPC.SealVent, SendOption.Reliable);
+                            (byte) CustomRPC.SealVent, Hazel.SendOption.Reliable);
                         writer.WritePacked(SecurityGuard.ventTarget.Id);
                         writer.EndMessage();
                         RPCProcedure.sealVent(SecurityGuard.ventTarget.Id);
@@ -825,7 +824,7 @@ namespace Modpack
                         Buffer.BlockCopy(BitConverter.GetBytes(pos.y), 0, buff, 1 * sizeof(float), sizeof(float));
 
                         var writer = AmongUsClient.Instance.StartRpc(PlayerControl.LocalPlayer.NetId,
-                            (byte) CustomRPC.PlaceCamera, SendOption.Reliable);
+                            (byte) CustomRPC.PlaceCamera, Hazel.SendOption.Reliable);
                         writer.WriteBytesAndSize(buff);
                         writer.EndMessage();
                         RPCProcedure.placeCamera(buff);
@@ -875,7 +874,7 @@ namespace Modpack
                     if (dousedEveryoneAlive)
                     {
                         var winWriter = AmongUsClient.Instance.StartRpcImmediately(PlayerControl.LocalPlayer.NetId,
-                            (byte) CustomRPC.ArsonistWin, SendOption.Reliable, -1);
+                            (byte) CustomRPC.ArsonistWin, Hazel.SendOption.Reliable, -1);
                         AmongUsClient.Instance.FinishRpcImmediately(winWriter);
                         RPCProcedure.arsonistWin();
                         arsonistButton.HasEffect = false;

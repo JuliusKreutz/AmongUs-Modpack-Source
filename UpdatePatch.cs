@@ -146,6 +146,11 @@ namespace Modpack
             {
                 setPlayerNameColor(Arsonist.arsonist, Arsonist.color);
             }
+            else if (Guesser.guesser != null && Guesser.guesser == PlayerControl.LocalPlayer)
+            {
+                setPlayerNameColor(Guesser.guesser,
+                    Guesser.guesser.Data.IsImpostor ? Palette.ImpostorRed : Guesser.color);
+            }
 
             // No else if here, as a Lover of team Jackal needs the colors
             if (Sidekick.sidekick != null && Sidekick.sidekick == PlayerControl.LocalPlayer)
@@ -164,7 +169,7 @@ namespace Modpack
                 setPlayerNameColor(Spy.spy, Spy.color);
             }
 
-            // Crewmate roles with no changes: Child
+            // Crewmate roles with no changes: Mini
             // Impostor roles with no changes: Morphling, Camouflager, Vampire, Godfather, Eraser, Janitor, Cleaner, Warlock and Mafioso
         }
 
@@ -191,8 +196,8 @@ namespace Modpack
             }
 
             // Lovers
-            if (Lovers.lover1 == null || Lovers.lover2 == null || (Lovers.lover1 != PlayerControl.LocalPlayer &&
-                                                                   Lovers.lover2 != PlayerControl.LocalPlayer)) return;
+            if (Lovers.lover1 == null || Lovers.lover2 == null || Lovers.lover1 != PlayerControl.LocalPlayer &&
+                Lovers.lover2 != PlayerControl.LocalPlayer) return;
             {
                 var suffix = Helpers.cs(Lovers.color, " ❤");
                 Lovers.lover1.nameText.text += suffix;
@@ -319,24 +324,24 @@ namespace Modpack
             }
         }
 
-        public static void childUpdate()
+        public static void miniUpdate()
         {
-            if (Child.child == null || Camouflager.camouflageTimer > 0f) return;
+            if (Mini.mini == null || Camouflager.camouflageTimer > 0f) return;
 
-            var growingProgress = Child.growingProgress();
+            var growingProgress = Mini.growingProgress();
             var suffix = "";
             if (growingProgress != 1f)
                 suffix = " <color=#FAD934FF>(" + Mathf.FloorToInt(growingProgress * 18) + ")</color>";
 
-            Child.child.nameText.text += suffix;
+            Mini.mini.nameText.text += suffix;
             if (MeetingHud.Instance != null)
             {
                 foreach (var player in MeetingHud.Instance.playerStates)
-                    if (player.NameText != null && Child.child.PlayerId == player.TargetPlayerId)
+                    if (player.NameText != null && Mini.mini.PlayerId == player.TargetPlayerId)
                         player.NameText.text += suffix;
             }
 
-            if (Morphling.morphling != null && Morphling.morphTarget == Child.child && Morphling.morphTimer > 0f)
+            if (Morphling.morphling != null && Morphling.morphTarget == Mini.mini && Morphling.morphTimer > 0f)
                 Morphling.morphling.nameText.text += suffix;
         }
 
@@ -411,8 +416,8 @@ namespace Modpack
             timerUpdate();
             // Camouflager and Morphling
             camouflageAndMorphActions();
-            // Child
-            childUpdate();
+            // Mini
+            miniUpdate();
             // Snitch
             snitchUpdate();
         }

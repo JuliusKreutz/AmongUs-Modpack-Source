@@ -24,7 +24,7 @@ namespace Modpack
             gameObject.transform.localPosition = new Vector3(0, -1.8f, gameObject.transform.localPosition.z);
             customMessages.Add(this);
 
-            HudManager.Instance.StartCoroutine(Effects.Lerp(duration, new Action<float>((p) =>
+            HudManager.Instance.StartCoroutine(Effects.Lerp(duration, new Action<float>(p =>
             {
                 var even = (int) (p * duration / 0.25f) % 2 == 0; // Bool flips every 0.25 seconds
                 var prefix = even ? "<color=#FCBA03FF>" : "<color=#FF0000FF>";

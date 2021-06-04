@@ -11,7 +11,7 @@ namespace Modpack
             var TotalTasks = 0;
             var CompletedTasks = 0;
             if (playerInfo.Disconnected || playerInfo.Tasks == null || !playerInfo.Object ||
-                (!PlayerControl.GameOptions.GhostsDoTasks && playerInfo.IsDead) || playerInfo.IsImpostor ||
+                !PlayerControl.GameOptions.GhostsDoTasks && playerInfo.IsDead || playerInfo.IsImpostor ||
                 playerInfo.Object.hasFakeTasks()) return Tuple.Create(CompletedTasks, TotalTasks);
             for (var j = 0; j < playerInfo.Tasks.Count; j++)
             {

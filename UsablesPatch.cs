@@ -10,11 +10,11 @@ using System.Collections.Generic;
 
 namespace Modpack
 {
-
     [HarmonyPatch(typeof(Vent), "CanUse")]
     public static class VentCanUsePatch
     {
-        public static bool Prefix(Vent __instance, ref float __result, [HarmonyArgument(0)] GameData.PlayerInfo pc, [HarmonyArgument(1)] out bool canUse, [HarmonyArgument(2)] out bool couldUse)
+        public static bool Prefix(Vent __instance, ref float __result, [HarmonyArgument(0)] GameData.PlayerInfo pc,
+            [HarmonyArgument(1)] out bool canUse, [HarmonyArgument(2)] out bool couldUse)
         {
             var num = float.MaxValue;
             var @object = pc.Object;
@@ -29,12 +29,14 @@ namespace Modpack
                 roleCouldUse = true;
             else if (Spy.canEnterVents && Spy.spy != null && Spy.spy == @object)
                 roleCouldUse = true;
-            else if (pc.IsImpostor) {
+            else if (pc.IsImpostor)
+            {
                 if (Morphling.morphling != null && Morphling.morphling == PlayerControl.LocalPlayer)
                     roleCouldUse = false;
                 else if (Janitor.janitor != null && Janitor.janitor == PlayerControl.LocalPlayer)
                     roleCouldUse = false;
-                else if (Mafioso.mafioso != null && Mafioso.mafioso == PlayerControl.LocalPlayer && Godfather.godfather != null && !Godfather.godfather.Data.IsDead)
+                else if (Mafioso.mafioso != null && Mafioso.mafioso == PlayerControl.LocalPlayer &&
+                         Godfather.godfather != null && !Godfather.godfather.Data.IsDead)
                     roleCouldUse = false;
                 else
                     roleCouldUse = true;
@@ -43,17 +45,20 @@ namespace Modpack
             var usableDistance = __instance.UsableDistance;
             if (__instance.name.StartsWith("JackInTheBoxVent_"))
             {
-                if(Trickster.trickster != PlayerControl.LocalPlayer) {
+                if (Trickster.trickster != PlayerControl.LocalPlayer)
+                {
                     // Only the Trickster can use the Jack-In-The-Boxes!
                     canUse = false;
                     couldUse = false;
                     __result = num;
-                    return false; 
+                    return false;
                 }
 
                 // Reduce the usable distance to reduce the risk of gettings stuck while trying to jump into the box if it's placed near objects
                 usableDistance = 0.4f;
-            } else if (__instance.name.StartsWith("SealedVent_")) {
+            }
+            else if (__instance.name.StartsWith("SealedVent_"))
+            {
                 canUse = couldUse = false;
                 __result = num;
                 return false;
@@ -66,61 +71,85 @@ namespace Modpack
                 var truePosition = @object.GetTruePosition();
                 var position = __instance.transform.position;
                 num = Vector2.Distance(truePosition, position);
-                
-                canUse &= num <= usableDistance && !PhysicsHelpers.AnythingBetween(truePosition, position, Constants.ShipOnlyMask, false);
+
+                canUse &= num <= usableDistance &&
+                          !PhysicsHelpers.AnythingBetween(truePosition, position, Constants.ShipOnlyMask, false);
             }
+
             __result = num;
             return false;
         }
     }
 
     [HarmonyPatch(typeof(Vent), "Use")]
-    public static class VentUsePatch {
-        public static bool Prefix(Vent __instance) {
+    public static class VentUsePatch
+    {
+        public static bool Prefix(Vent __instance)
+        {
             __instance.CanUse(PlayerControl.LocalPlayer.Data, out var canUse, out _);
             var canMoveInVents = true;
             if (!canUse) return false; // No need to execute the native method as using is disallowed anyways
-            if (Spy.spy == PlayerControl.LocalPlayer) {
+            if (Spy.spy == PlayerControl.LocalPlayer)
+            {
                 canMoveInVents = false;
             }
+
             var isEnter = !PlayerControl.LocalPlayer.inVent;
-            
-            if (__instance.name.StartsWith("JackInTheBoxVent_")) {
+
+            if (__instance.name.StartsWith("JackInTheBoxVent_"))
+            {
                 __instance.SetButtons(isEnter && canMoveInVents);
-                var writer = AmongUsClient.Instance.StartRpc(PlayerControl.LocalPlayer.NetId, (byte)CustomRPC.UseUncheckedVent, Hazel.SendOption.Reliable);
+                var writer = AmongUsClient.Instance.StartRpc(PlayerControl.LocalPlayer.NetId,
+                    (byte) CustomRPC.UseUncheckedVent, Hazel.SendOption.Reliable);
                 writer.WritePacked(__instance.Id);
                 writer.Write(PlayerControl.LocalPlayer.PlayerId);
-                writer.Write(isEnter ? byte.MaxValue : (byte)0);
+                writer.Write(isEnter ? byte.MaxValue : (byte) 0);
                 writer.EndMessage();
-                RPCProcedure.useUncheckedVent(__instance.Id, PlayerControl.LocalPlayer.PlayerId, isEnter ? byte.MaxValue : (byte)0);
+                RPCProcedure.useUncheckedVent(__instance.Id, PlayerControl.LocalPlayer.PlayerId,
+                    isEnter ? byte.MaxValue : (byte) 0);
                 return false;
             }
 
-            if(isEnter) {
+            if (isEnter)
+            {
                 PlayerControl.LocalPlayer.MyPhysics.RpcEnterVent(__instance.Id);
-            } else {
+            }
+            else
+            {
                 PlayerControl.LocalPlayer.MyPhysics.RpcExitVent(__instance.Id);
             }
+
             __instance.SetButtons(isEnter && canMoveInVents);
             return false;
         }
     }
 
     [HarmonyPatch(typeof(UseButtonManager), nameof(UseButtonManager.SetTarget))]
-    internal class UseButtonSetTargetPatch {
-        private static void Postfix(UseButtonManager __instance) {
+    internal class UseButtonSetTargetPatch
+    {
+        private static void Postfix(UseButtonManager __instance)
+        {
             // Trickster render special vent button
-            if (__instance.currentTarget != null && Trickster.trickster != null && Trickster.trickster == PlayerControl.LocalPlayer) {
-                var possibleVent =  __instance.currentTarget.TryCast<Vent>();
-                if (possibleVent != null && possibleVent.gameObject != null && possibleVent.gameObject.name.StartsWith("JackInTheBoxVent_")) {
+            if (__instance.currentTarget != null && Trickster.trickster != null &&
+                Trickster.trickster == PlayerControl.LocalPlayer)
+            {
+                var possibleVent = __instance.currentTarget.TryCast<Vent>();
+                if (possibleVent != null && possibleVent.gameObject != null &&
+                    possibleVent.gameObject.name.StartsWith("JackInTheBoxVent_"))
+                {
                     __instance.UseButton.sprite = Trickster.getTricksterVentButtonSprite();
                 }
             }
 
             // Jester sabotage
-            if (Jester.canSabotage && Jester.jester != null && Jester.jester == PlayerControl.LocalPlayer && PlayerControl.LocalPlayer.CanMove) {
-                if (!Jester.jester.Data.IsDead && __instance.currentTarget == null) { // no target, so sabotage
-                    __instance.UseButton.sprite = DestroyableSingleton<TranslationController>.Instance.GetImage(ImageNames.SabotageButton);
+            if (Jester.canSabotage && Jester.jester != null && Jester.jester == PlayerControl.LocalPlayer &&
+                PlayerControl.LocalPlayer.CanMove)
+            {
+                if (!Jester.jester.Data.IsDead && __instance.currentTarget == null)
+                {
+                    // no target, so sabotage
+                    __instance.UseButton.sprite =
+                        DestroyableSingleton<TranslationController>.Instance.GetImage(ImageNames.SabotageButton);
                     CooldownHelpers.SetCooldownNormalizedUvs(__instance.UseButton);
                     __instance.UseButton.color = UseButtonManager.EnabledColor;
                 }
@@ -128,21 +157,26 @@ namespace Modpack
 
             // Mafia sabotage button render patch
             var blockSabotageJanitor = Janitor.janitor != null && Janitor.janitor == PlayerControl.LocalPlayer;
-            var blockSabotageMafioso = Mafioso.mafioso != null && Mafioso.mafioso == PlayerControl.LocalPlayer && Godfather.godfather != null && !Godfather.godfather.Data.IsDead;
-            if (__instance.currentTarget != null || (!blockSabotageJanitor && !blockSabotageMafioso)) return;
-            __instance.UseButton.sprite = DestroyableSingleton<TranslationController>.Instance.GetImage(ImageNames.UseButton);
+            var blockSabotageMafioso = Mafioso.mafioso != null && Mafioso.mafioso == PlayerControl.LocalPlayer &&
+                                       Godfather.godfather != null && !Godfather.godfather.Data.IsDead;
+            if (__instance.currentTarget != null || !blockSabotageJanitor && !blockSabotageMafioso) return;
+            __instance.UseButton.sprite =
+                DestroyableSingleton<TranslationController>.Instance.GetImage(ImageNames.UseButton);
             __instance.UseButton.color = new Color(1f, 1f, 1f, 0.3f);
-
         }
     }
 
     [HarmonyPatch(typeof(UseButtonManager), nameof(UseButtonManager.DoClick))]
-    internal class UseButtonDoClickPatch {
-        private static bool Prefix(UseButtonManager __instance) { 
+    internal class UseButtonDoClickPatch
+    {
+        private static bool Prefix(UseButtonManager __instance)
+        {
             if (__instance.currentTarget != null) return true;
 
             // Jester sabotage
-            if (Jester.canSabotage && Jester.jester != null && Jester.jester == PlayerControl.LocalPlayer && !Jester.jester.Data.IsDead) {
+            if (Jester.canSabotage && Jester.jester != null && Jester.jester == PlayerControl.LocalPlayer &&
+                !Jester.jester.Data.IsDead)
+            {
                 static void Action(MapBehaviour m) => m.ShowInfectedMap();
                 DestroyableSingleton<HudManager>.Instance.ShowMap((Action<MapBehaviour>) Action);
                 return false;
@@ -150,31 +184,36 @@ namespace Modpack
 
             // Mafia sabotage button click patch
             var blockSabotageJanitor = Janitor.janitor != null && Janitor.janitor == PlayerControl.LocalPlayer;
-            var blockSabotageMafioso = Mafioso.mafioso != null && Mafioso.mafioso == PlayerControl.LocalPlayer && Godfather.godfather != null && !Godfather.godfather.Data.IsDead;
-            if (blockSabotageJanitor || blockSabotageMafioso) return false;
-
-            return true;
+            var blockSabotageMafioso = Mafioso.mafioso != null && Mafioso.mafioso == PlayerControl.LocalPlayer &&
+                                       Godfather.godfather != null && !Godfather.godfather.Data.IsDead;
+            return !blockSabotageJanitor && !blockSabotageMafioso;
         }
     }
 
     [HarmonyPatch(typeof(EmergencyMinigame), nameof(EmergencyMinigame.Update))]
-    internal class EmergencyMinigameUpdatePatch {
-        private static void Postfix(EmergencyMinigame __instance) {
+    internal class EmergencyMinigameUpdatePatch
+    {
+        private static void Postfix(EmergencyMinigame __instance)
+        {
             var roleCanCallEmergency = true;
             var statusText = "";
 
             // Deactivate emergency button for Swapper
-            if (Swapper.swapper != null && Swapper.swapper == PlayerControl.LocalPlayer && !Swapper.canCallEmergency) {
+            if (Swapper.swapper != null && Swapper.swapper == PlayerControl.LocalPlayer && !Swapper.canCallEmergency)
+            {
                 roleCanCallEmergency = false;
                 statusText = "The Swapper can't start an emergency meeting";
             }
+
             // Potentially deactivate emergency button for Jester
-            if (Jester.jester != null && Jester.jester == PlayerControl.LocalPlayer && !Jester.canCallEmergency) {
+            if (Jester.jester != null && Jester.jester == PlayerControl.LocalPlayer && !Jester.canCallEmergency)
+            {
                 roleCanCallEmergency = false;
                 statusText = "The Jester can't start an emergency meeting";
             }
 
-            if (!roleCanCallEmergency) {
+            if (!roleCanCallEmergency)
+            {
                 __instance.StatusText.text = statusText;
                 __instance.NumberText.text = string.Empty;
                 __instance.ClosedLid.gameObject.SetActive(true);
@@ -187,7 +226,8 @@ namespace Modpack
             if (__instance.state != 1) return;
             var localRemaining = PlayerControl.LocalPlayer.RemainingEmergencies;
             var teamRemaining = Mathf.Max(0, maxNumberOfMeetings - meetingsCount);
-            var remaining = Mathf.Min(localRemaining, Mayor.mayor != null && Mayor.mayor == PlayerControl.LocalPlayer ? 1 : teamRemaining);
+            var remaining = Mathf.Min(localRemaining,
+                Mayor.mayor != null && Mayor.mayor == PlayerControl.LocalPlayer ? 1 : teamRemaining);
             __instance.NumberText.text = $"{localRemaining.ToString()} and the ship has {teamRemaining.ToString()}";
             __instance.ButtonActive = remaining > 0;
             __instance.ClosedLid.gameObject.SetActive(!__instance.ButtonActive);
@@ -197,8 +237,11 @@ namespace Modpack
 
 
     [HarmonyPatch(typeof(Console), nameof(Console.CanUse))]
-    public static class ConsoleCanUsePatch {
-        public static bool Prefix(ref float __result, Console __instance, [HarmonyArgument(0)] GameData.PlayerInfo pc, [HarmonyArgument(1)] out bool canUse, [HarmonyArgument(2)] out bool couldUse) {
+    public static class ConsoleCanUsePatch
+    {
+        public static bool Prefix(ref float __result, Console __instance, [HarmonyArgument(0)] GameData.PlayerInfo pc,
+            [HarmonyArgument(1)] out bool canUse, [HarmonyArgument(2)] out bool couldUse)
+        {
             canUse = couldUse = false;
             if (Swapper.swapper != null && Swapper.swapper == PlayerControl.LocalPlayer)
                 return !__instance.TaskTypes.Any(x => x == TaskTypes.FixLights || x == TaskTypes.FixComms);
@@ -210,44 +253,57 @@ namespace Modpack
     }
 
     [HarmonyPatch(typeof(TuneRadioMinigame), nameof(TuneRadioMinigame.Begin))]
-    internal class CommsMinigameBeginPatch {
-        private static void Postfix(TuneRadioMinigame __instance) {
+    internal class CommsMinigameBeginPatch
+    {
+        private static void Postfix(TuneRadioMinigame __instance)
+        {
             // Block Swapper from fixing comms. Still looking for a better way to do this, but deleting the task doesn't seem like a viable option since then the camera, admin table, ... work while comms are out
-            if (Swapper.swapper != null && Swapper.swapper == PlayerControl.LocalPlayer) {
+            if (Swapper.swapper != null && Swapper.swapper == PlayerControl.LocalPlayer)
+            {
                 __instance.Close();
             }
         }
     }
 
     [HarmonyPatch(typeof(SwitchMinigame), nameof(SwitchMinigame.Begin))]
-    internal class LightsMinigameBeginPatch {
-        private static void Postfix(SwitchMinigame __instance) {
+    internal class LightsMinigameBeginPatch
+    {
+        private static void Postfix(Minigame __instance)
+        {
             // Block Swapper from fixing lights. One could also just delete the PlayerTask, but I wanted to do it the same way as with coms for now.
-            if (Swapper.swapper != null && Swapper.swapper == PlayerControl.LocalPlayer) {
+            if (Swapper.swapper != null && Swapper.swapper == PlayerControl.LocalPlayer)
+            {
                 __instance.Close();
             }
         }
     }
 
     [HarmonyPatch(typeof(VitalsMinigame), nameof(VitalsMinigame.Begin))]
-    internal class VitalsMinigameBeginPatch {
+    internal class VitalsMinigameBeginPatch
+    {
         private static void Postfix(VitalsMinigame __instance)
         {
             if (__instance.vitals.Length <= 10) return;
-            for (var i = 0; i < __instance.vitals.Length; i++) {
+            for (var i = 0; i < __instance.vitals.Length; i++)
+            {
                 var vitalsPanel = __instance.vitals[i];
                 var player = GameData.Instance.AllPlayers[i];
-                vitalsPanel.Text.text = player.PlayerName.Length >= 4 ? player.PlayerName[..4].ToUpper() : player.PlayerName.ToUpper();
+                vitalsPanel.Text.text = player.PlayerName.Length >= 4
+                    ? player.PlayerName[..4].ToUpper()
+                    : player.PlayerName.ToUpper();
             }
         }
     }
-    
+
 
     [HarmonyPatch(typeof(VitalsMinigame), nameof(VitalsMinigame.Update))]
-    internal class VitalsMinigameUpdatePatch {
-        private static void Postfix(VitalsMinigame __instance) {
+    internal class VitalsMinigameUpdatePatch
+    {
+        private static void Postfix(VitalsMinigame __instance)
+        {
             // Hacker show time since death
-            var showHackerInfo = Hacker.hacker != null && Hacker.hacker == PlayerControl.LocalPlayer && Hacker.hackerTimer > 0;
+            var showHackerInfo = Hacker.hacker != null && Hacker.hacker == PlayerControl.LocalPlayer &&
+                                 Hacker.hackerTimer > 0;
             for (var k = 0; k < __instance.vitals.Length; k++)
             {
                 var vitalsPanel = __instance.vitals[k];
@@ -263,39 +319,48 @@ namespace Modpack
                 if (!vitalsPanel.IsDead) continue;
                 var deadPlayer = deadPlayers?.Where(x => x.player?.PlayerId == player?.PlayerId).FirstOrDefault();
                 if (deadPlayer?.timeOfDeath == null) continue;
-                var timeSinceDeath = (float)(DateTime.UtcNow - deadPlayer.timeOfDeath).TotalMilliseconds;
+                var timeSinceDeath = (float) (DateTime.UtcNow - deadPlayer.timeOfDeath).TotalMilliseconds;
 
                 if (showHackerInfo)
                     vitalsPanel.Text.text = Math.Round(timeSinceDeath / 1000) + "s";
                 else if (__instance.vitals.Length > 10)
-                    vitalsPanel.Text.text = player.PlayerName.Length >= 4 ? player.PlayerName[..4].ToUpper() : player.PlayerName.ToUpper();
-                else 
-                    vitalsPanel.Text.text = DestroyableSingleton<TranslationController>.Instance.GetString(Palette.ShortColorNames[player.ColorId], new UnhollowerBaseLib.Il2CppReferenceArray<Il2CppSystem.Object>(0));
+                    vitalsPanel.Text.text = player.PlayerName.Length >= 4
+                        ? player.PlayerName[..4].ToUpper()
+                        : player.PlayerName.ToUpper();
+                else
+                    vitalsPanel.Text.text = DestroyableSingleton<TranslationController>.Instance.GetString(
+                        Palette.ShortColorNames[player.ColorId],
+                        new UnhollowerBaseLib.Il2CppReferenceArray<Il2CppSystem.Object>(0));
             }
         }
-    }    
+    }
 
     [HarmonyPatch]
-    internal class AdminPanelPatch {
+    internal class AdminPanelPatch
+    {
         private static Dictionary<SystemTypes, List<Color>> players = new Dictionary<SystemTypes, List<Color>>();
         private static readonly int BodyColor = Shader.PropertyToID("_BodyColor");
         private static readonly int BackColor = Shader.PropertyToID("_BackColor");
         private static readonly int VisorColor = Shader.PropertyToID("_VisorColor");
 
         [HarmonyPatch(typeof(MapCountOverlay), nameof(MapCountOverlay.Update))]
-        private class MapCountOverlayUpdatePatch {
-            private static bool Prefix(MapCountOverlay __instance) {
+        private class MapCountOverlayUpdatePatch
+        {
+            private static bool Prefix(MapCountOverlay __instance)
+            {
                 // Save colors for the Hacker
                 __instance.timer += Time.deltaTime;
                 if (__instance.timer < 0.1f)
                 {
                     return false;
                 }
+
                 __instance.timer = 0f;
                 players = new Dictionary<SystemTypes, List<Color>>();
                 var commsActive = false;
-                    foreach (var task in PlayerControl.LocalPlayer.myTasks)
-                        if (task.TaskType == TaskTypes.FixComms) commsActive = true;       
+                foreach (var task in PlayerControl.LocalPlayer.myTasks)
+                    if (task.TaskType == TaskTypes.FixComms)
+                        commsActive = true;
 
 
                 switch (__instance.isSab)
@@ -331,28 +396,40 @@ namespace Modpack
                                 if (collider2D.tag != "DeadBody")
                                 {
                                     var component = collider2D.GetComponent<PlayerControl>();
-                                    if (!component || component.Data == null || component.Data.Disconnected || component.Data.IsDead)
+                                    if (!component || component.Data == null || component.Data.Disconnected ||
+                                        component.Data.IsDead)
                                     {
                                         num2--;
-                                    } else if (component.myRend?.material != null) {
+                                    }
+                                    else if (component.myRend?.material != null)
+                                    {
                                         var color = component.myRend.material.GetColor(BodyColor);
-                                        if (Hacker.onlyColorType) {
+                                        if (Hacker.onlyColorType)
+                                        {
                                             var id = Mathf.Max(0, Palette.PlayerColors.IndexOf(color));
-                                            color = Helpers.isLighterColor((byte)id) ? Palette.PlayerColors[7] : Palette.PlayerColors[6];
+                                            color = Helpers.isLighterColor((byte) id)
+                                                ? Palette.PlayerColors[7]
+                                                : Palette.PlayerColors[6];
                                         }
+
                                         roomColors.Add(color);
                                     }
-                                } else {
+                                }
+                                else
+                                {
                                     var component = collider2D.GetComponent<DeadBody>();
                                     if (!component) continue;
                                     var playerInfo = GameData.Instance.GetPlayerById(component.ParentId);
                                     if (playerInfo == null) continue;
                                     var color = Palette.PlayerColors[playerInfo.ColorId];
                                     if (Hacker.onlyColorType)
-                                        color = Helpers.isLighterColor(playerInfo.ColorId) ? Palette.PlayerColors[7] : Palette.PlayerColors[6];
+                                        color = Helpers.isLighterColor(playerInfo.ColorId)
+                                            ? Palette.PlayerColors[7]
+                                            : Palette.PlayerColors[6];
                                     roomColors.Add(color);
                                 }
                             }
+
                             counterArea.UpdateCount(num2);
                         }
                         else
@@ -365,40 +442,52 @@ namespace Modpack
                         counterArea.UpdateCount(0);
                     }
                 }
+
                 return false;
             }
         }
 
         [HarmonyPatch(typeof(CounterArea), nameof(CounterArea.UpdateCount))]
-        private class CounterAreaUpdateCountPatch {
+        private class CounterAreaUpdateCountPatch
+        {
             private static Material defaultMat;
             private static Material newMat;
 
-            private static void Postfix(CounterArea __instance) {
+            private static void Postfix(CounterArea __instance)
+            {
                 // Hacker display saved colors on the admin panel
-                var showHackerInfo = Hacker.hacker != null && Hacker.hacker == PlayerControl.LocalPlayer && Hacker.hackerTimer > 0;
+                var showHackerInfo = Hacker.hacker != null && Hacker.hacker == PlayerControl.LocalPlayer &&
+                                     Hacker.hackerTimer > 0;
                 if (!players.ContainsKey(__instance.RoomType)) return;
                 var colors = players[__instance.RoomType];
 
-                for (var i = 0; i < __instance.myIcons.Count; i++) {
+                for (var i = 0; i < __instance.myIcons.Count; i++)
+                {
                     PoolableBehavior icon = __instance.myIcons[i];
                     var renderer = icon.GetComponent<SpriteRenderer>();
 
                     if (renderer == null) continue;
                     if (defaultMat == null) defaultMat = renderer.material;
                     if (newMat == null) newMat = UnityEngine.Object.Instantiate(defaultMat);
-                    if (showHackerInfo && colors.Count > i) {
+                    if (showHackerInfo && colors.Count > i)
+                    {
                         renderer.material = newMat;
                         var color = colors[i];
                         renderer.material.SetColor(BodyColor, color);
                         var id = Palette.PlayerColors.IndexOf(color);
-                        if (id < 0) {
+                        if (id < 0)
+                        {
                             renderer.material.SetColor(BackColor, color);
-                        } else {
+                        }
+                        else
+                        {
                             renderer.material.SetColor(BackColor, Palette.ShadowColors[id]);
                         }
+
                         renderer.material.SetColor(VisorColor, Palette.VisorColor);
-                    } else {
+                    }
+                    else
+                    {
                         renderer.material = defaultMat;
                     }
                 }
@@ -407,20 +496,25 @@ namespace Modpack
     }
 
     [HarmonyPatch]
-    internal class SurveillanceMinigamePatch {
+    internal class SurveillanceMinigamePatch
+    {
         private static int page;
         private static float timer;
         private static readonly int MainTex = Shader.PropertyToID("_MainTex");
 
         [HarmonyPatch(typeof(SurveillanceMinigame), nameof(SurveillanceMinigame.Begin))]
-        private class SurveillanceMinigameBeginPatch {
-            public static void Postfix(SurveillanceMinigame __instance) {
+        private class SurveillanceMinigameBeginPatch
+        {
+            public static void Postfix(SurveillanceMinigame __instance)
+            {
                 // Add securityGuard cameras
                 page = 0;
                 timer = 0;
                 if (ShipStatus.Instance.AllCameras.Length <= 4 || __instance.FilteredRooms.Length <= 0) return;
-                __instance.textures = __instance.textures.ToList().Concat(new RenderTexture[ShipStatus.Instance.AllCameras.Length - 4]).ToArray();
-                for (var i = 4; i < ShipStatus.Instance.AllCameras.Length; i++) {
+                __instance.textures = __instance.textures.ToList()
+                    .Concat(new RenderTexture[ShipStatus.Instance.AllCameras.Length - 4]).ToArray();
+                for (var i = 4; i < ShipStatus.Instance.AllCameras.Length; i++)
+                {
                     var surv = ShipStatus.Instance.AllCameras[i];
                     var camera = UnityEngine.Object.Instantiate(__instance.CameraPrefab, __instance.transform, true);
                     var position = surv.transform.position;
@@ -434,28 +528,35 @@ namespace Modpack
         }
 
         [HarmonyPatch(typeof(SurveillanceMinigame), nameof(SurveillanceMinigame.Update))]
-        private class SurveillanceMinigameUpdatePatch {
-
-            public static bool Prefix(SurveillanceMinigame __instance) {
+        private class SurveillanceMinigameUpdatePatch
+        {
+            public static bool Prefix(SurveillanceMinigame __instance)
+            {
                 // Update normal and securityGuard cameras
                 timer += Time.deltaTime;
                 var numberOfPages = Mathf.CeilToInt(ShipStatus.Instance.AllCameras.Length / 4f);
 
                 var update = false;
 
-                if (timer > 3f || Input.GetKeyDown(KeyCode.RightArrow)) {
+                if (timer > 3f || Input.GetKeyDown(KeyCode.RightArrow))
+                {
                     update = true;
                     timer = 0f;
                     page = (page + 1) % numberOfPages;
-                } else if (Input.GetKeyDown(KeyCode.LeftArrow)) {
+                }
+                else if (Input.GetKeyDown(KeyCode.LeftArrow))
+                {
                     page = (page + numberOfPages - 1) % numberOfPages;
                     update = true;
                     timer = 0f;
                 }
 
-                if ((__instance.isStatic || update) && !PlayerTask.PlayerHasTaskOfType<IHudOverrideTask>(PlayerControl.LocalPlayer)) {
+                if ((__instance.isStatic || update) &&
+                    !PlayerTask.PlayerHasTaskOfType<IHudOverrideTask>(PlayerControl.LocalPlayer))
+                {
                     __instance.isStatic = false;
-                    for (var i = 0; i < __instance.ViewPorts.Length; i++) {
+                    for (var i = 0; i < __instance.ViewPorts.Length; i++)
+                    {
                         __instance.ViewPorts[i].sharedMaterial = __instance.DefaultMaterial;
                         __instance.SabText[i].gameObject.SetActive(false);
                         if (page * 4 + i < __instance.textures.Length)
@@ -463,13 +564,18 @@ namespace Modpack
                         else
                             __instance.ViewPorts[i].sharedMaterial = __instance.StaticMaterial;
                     }
-                } else if (!__instance.isStatic && PlayerTask.PlayerHasTaskOfType<HudOverrideTask>(PlayerControl.LocalPlayer)) {
+                }
+                else if (!__instance.isStatic &&
+                         PlayerTask.PlayerHasTaskOfType<HudOverrideTask>(PlayerControl.LocalPlayer))
+                {
                     __instance.isStatic = true;
-                    for (var j = 0; j < __instance.ViewPorts.Length; j++) {
+                    for (var j = 0; j < __instance.ViewPorts.Length; j++)
+                    {
                         __instance.ViewPorts[j].sharedMaterial = __instance.StaticMaterial;
                         __instance.SabText[j].gameObject.SetActive(true);
                     }
                 }
+
                 return false;
             }
         }

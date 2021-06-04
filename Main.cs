@@ -59,7 +59,6 @@ namespace Modpack
             StreamerModeReplacementColor =
                 Config.Bind("Custom", "Streamer Mode Replacement Text Hex Color", "#87AAF5FF");
 
-
             Ip = Config.Bind("Custom", "Custom Server IP", "julius-kreutz.de");
             Port = Config.Bind("Custom", "Custom Server Port", (ushort) 22023);
             defaultRegions = ServerManager.DefaultRegions;

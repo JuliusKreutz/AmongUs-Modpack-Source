@@ -17,7 +17,7 @@ namespace Modpack
             public Vector2 offset;
         }
 
-        private static readonly List<HatData> _hatDatas = new List<HatData>()
+        private static readonly List<HatData> _hatDatas = new List<HatData>
         {
             new HatData
             {
@@ -626,7 +626,7 @@ namespace Modpack
             new HatData
             {
                 name = "glitch", offset = new Vector2(-0.1f, 0.2f)
-            },
+            }
         };
 
         public static readonly List<uint> TallIds = new List<uint>();

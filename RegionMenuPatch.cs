@@ -52,7 +52,7 @@ namespace Modpack
                 ipField.AllowSymbols = true;
                 ipField.ForceUppercase = false;
                 ipField.SetText(ModpackPlugin.Ip.Value);
-                __instance.StartCoroutine(Effects.Lerp(0.1f, new Action<float>((p) =>
+                __instance.StartCoroutine(Effects.Lerp(0.1f, new Action<float>(p =>
                 {
                     ipField.outputText.SetText(ModpackPlugin.Ip.Value);
                     ipField.SetText(ModpackPlugin.Ip.Value);
@@ -64,7 +64,7 @@ namespace Modpack
                 ipField.OnChange.AddListener((UnityAction) onEnterOrIpChange);
                 ipField.OnFocusLost.AddListener((UnityAction) onFocusLost);
 
-                void onEnterOrIpChange()
+                static void onEnterOrIpChange()
                 {
                     ModpackPlugin.Ip.Value = ipField.text;
                 }
@@ -85,7 +85,7 @@ namespace Modpack
                 portField.transform.localPosition = new Vector3(0, -1.75f, -100f);
                 portField.characterLimit = 5;
                 portField.SetText(ModpackPlugin.Port.Value.ToString());
-                __instance.StartCoroutine(Effects.Lerp(0.1f, new Action<float>((p) =>
+                __instance.StartCoroutine(Effects.Lerp(0.1f, new Action<float>(p =>
                 {
                     portField.outputText.SetText(ModpackPlugin.Port.Value.ToString());
                     portField.SetText(ModpackPlugin.Port.Value.ToString());

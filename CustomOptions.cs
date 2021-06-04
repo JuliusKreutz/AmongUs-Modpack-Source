@@ -4,7 +4,6 @@ using BepInEx.Configuration;
 using System;
 using System.Linq;
 using HarmonyLib;
-using Hazel;
 using System.Reflection;
 using System.Text;
 using static Modpack.Modpack;
@@ -46,13 +45,17 @@ namespace Modpack
         public static CustomOption eraserCooldown;
         public static CustomOption eraserCanEraseAnyone;
 
-        public static CustomOption childSpawnRate;
-        public static CustomOption childGrowingUpDuration;
+        public static CustomOption miniSpawnRate;
+        public static CustomOption miniGrowingUpDuration;
 
         public static CustomOption loversSpawnRate;
         public static CustomOption loversImpLoverRate;
         public static CustomOption loversBothDie;
         public static CustomOption loversCanHaveAnotherRole;
+
+        public static CustomOption guesserSpawnRate;
+        public static CustomOption guesserIsImpGuesserRate;
+        public static CustomOption guesserNumberOfShots;
 
         public static CustomOption jesterSpawnRate;
         public static CustomOption jesterCanCallEmergency;
@@ -225,14 +228,20 @@ namespace Modpack
             warlockCooldown = CustomOption.Create(271, "Warlock Cooldown", 30f, 10f, 60f, 2.5f, warlockSpawnRate);
             warlockRootTime = CustomOption.Create(272, "Warlock Root Time", 5f, 0f, 15f, 1f, warlockSpawnRate);
 
-            childSpawnRate = CustomOption.Create(180, cs(Child.color, "Child"), rates, null, true);
-            childGrowingUpDuration =
-                CustomOption.Create(181, "Child Growing Up Duration", 400f, 100f, 1500f, 100f, childSpawnRate);
+            miniSpawnRate = CustomOption.Create(180, cs(Mini.color, "Mini"), rates, null, true);
+            miniGrowingUpDuration =
+                CustomOption.Create(181, "Mini Growing Up Duration", 400f, 100f, 1500f, 100f, miniSpawnRate);
 
             loversSpawnRate = CustomOption.Create(50, cs(Lovers.color, "Lovers"), rates, null, true);
             loversImpLoverRate = CustomOption.Create(51, "Chance That One Lover Is Impostor", rates, loversSpawnRate);
             loversBothDie = CustomOption.Create(52, "Both Lovers Die", true, loversSpawnRate);
             loversCanHaveAnotherRole = CustomOption.Create(53, "Lovers Can Have Another Role", true, loversSpawnRate);
+
+            guesserSpawnRate = CustomOption.Create(310, cs(Guesser.color, "Guesser"), rates, null, true);
+            guesserIsImpGuesserRate =
+                CustomOption.Create(311, "Chance That The Guesser Is An Impostor", rates, guesserSpawnRate);
+            guesserNumberOfShots =
+                CustomOption.Create(312, "Guesser Number Of Shots", 2f, 1f, 15f, 1f, guesserSpawnRate);
 
             jesterSpawnRate = CustomOption.Create(60, cs(Jester.color, "Jester"), rates, null, true);
             jesterCanCallEmergency =
@@ -444,7 +453,7 @@ namespace Modpack
             {
                 if (AmongUsClient.Instance is null) continue;
                 var messageWriter = AmongUsClient.Instance.StartRpc(PlayerControl.LocalPlayer.NetId,
-                    (byte) CustomRPC.ShareOptionSelection, SendOption.Reliable);
+                    (byte) CustomRPC.ShareOptionSelection, Hazel.SendOption.Reliable);
                 messageWriter.WritePacked((uint) option.id);
                 messageWriter.WritePacked(Convert.ToUInt32(option.selection));
                 messageWriter.EndMessage();
@@ -501,7 +510,7 @@ namespace Modpack
                     var stringOption = UnityEngine.Object.Instantiate(template, template.transform.parent);
                     allOptions.Add(stringOption);
 
-                    stringOption.OnValueChanged = new Action<OptionBehaviour>((o) => { });
+                    stringOption.OnValueChanged = new Action<OptionBehaviour>(o => { });
                     stringOption.TitleText.text = option.name;
                     stringOption.Value = stringOption.oldValue = option.selection;
                     stringOption.ValueText.text = option.selections[option.selection].ToString();
@@ -533,7 +542,7 @@ namespace Modpack
             var option = CustomOption.options.FirstOrDefault(o => o.optionBehaviour == __instance);
             if (option == null) return true;
 
-            __instance.OnValueChanged = new Action<OptionBehaviour>((o) => { });
+            __instance.OnValueChanged = new Action<OptionBehaviour>(o => { });
             __instance.TitleText.text = option.name;
             __instance.Value = __instance.oldValue = option.selection;
             __instance.ValueText.text = option.selections[option.selection].ToString();
@@ -721,7 +730,7 @@ namespace Modpack
             var hudString = sb.ToString();
 
             var defaultSettingsLines = 19;
-            var roleSettingsLines = defaultSettingsLines + 32;
+            var roleSettingsLines = defaultSettingsLines + 33;
             var detailedSettingsP1 = roleSettingsLines + 34;
             var detailedSettingsP2 = detailedSettingsP1 + 35;
             var end1 = hudString.TakeWhile(c => (defaultSettingsLines -= c == '\n' ? 1 : 0) > 0).Count();
@@ -744,10 +753,10 @@ namespace Modpack
                     gap = 5;
                     index = hudString.TakeWhile(c => (gap -= c == '\n' ? 1 : 0) > 0).Count();
                     hudString = hudString.Insert(index, "\n");
-                    gap = 16;
+                    gap = 17;
                     index = hudString.TakeWhile(c => (gap -= c == '\n' ? 1 : 0) > 0).Count();
                     hudString = hudString.Insert(index + 1, "\n");
-                    gap = 20;
+                    gap = 21;
                     index = hudString.TakeWhile(c => (gap -= c == '\n' ? 1 : 0) > 0).Count();
                     hudString = hudString.Insert(index + 1, "\n");
                     break;

@@ -27,6 +27,8 @@ namespace Modpack
             var data = getRoleAssignmentData();
             assignSpecialRoles(
                 data); // Assign special roles like mafia and lovers first as they assign a role to multiple players and the chances are independent of the ticket system
+            if (Mini.mini != null) // Remove Spy from assigns, if Mini exists
+                data.crewSettings.Remove((byte) RoleId.Spy);
             assignEnsuredRoles(data); // Assign roles that should always be in the game next
             assignChanceRoles(data); // Assign roles that may or may not be in the game last
         }
@@ -143,7 +145,6 @@ namespace Modpack
                         var crewmatesWithoutFirstLover = data.crewmates.ToList();
                         crewmatesWithoutFirstLover.RemoveAll(p => p.PlayerId == firstLoverId);
                         setRoleToRandomPlayer((byte) RoleId.Lover, crewmatesWithoutFirstLover, 1, false);
-                        System.Console.WriteLine(crewmatesWithoutFirstLover.Count);
                     }
                 }
             }
@@ -158,16 +159,32 @@ namespace Modpack
                 data.maxImpostorRoles -= 3;
             }
 
-            // Assign Child
-            if (rnd.Next(1, 101) > CustomOptionHolder.childSpawnRate.getSelection() * 10) return;
-            if (data.impostors.Count > 0 && data.maxImpostorRoles > 0 && rnd.Next(1, 101) <= 33)
+            // Assign Mini
+            if (rnd.Next(1, 101) <= CustomOptionHolder.miniSpawnRate.getSelection() * 10)
             {
-                setRoleToRandomPlayer((byte) RoleId.Child, data.impostors);
+                if (data.impostors.Count > 0 && data.maxImpostorRoles > 0 && rnd.Next(1, 101) <= 33)
+                {
+                    setRoleToRandomPlayer((byte) RoleId.Mini, data.impostors);
+                    data.maxImpostorRoles--;
+                }
+                else if (data.crewmates.Count > 0 && data.maxCrewmateRoles > 0)
+                {
+                    setRoleToRandomPlayer((byte) RoleId.Mini, data.crewmates);
+                    data.maxCrewmateRoles--;
+                }
+            }
+
+            // Assign Guesser
+            if (rnd.Next(1, 101) > CustomOptionHolder.guesserSpawnRate.getSelection() * 10) return;
+            if (data.impostors.Count > 0 && data.maxImpostorRoles > 0 &&
+                rnd.Next(1, 101) <= CustomOptionHolder.guesserIsImpGuesserRate.getSelection() * 10)
+            {
+                setRoleToRandomPlayer((byte) RoleId.Guesser, data.impostors);
                 data.maxImpostorRoles--;
             }
             else if (data.crewmates.Count > 0 && data.maxCrewmateRoles > 0)
             {
-                setRoleToRandomPlayer((byte) RoleId.Child, data.crewmates);
+                setRoleToRandomPlayer((byte) RoleId.Guesser, data.crewmates);
                 data.maxCrewmateRoles--;
             }
         }
@@ -198,7 +215,7 @@ namespace Modpack
                 // Randomly select a pool of roles to assign a role from next (Crewmate role, Neutral role or Impostor role) 
                 // then select one of the roles from the selected pool to a player 
                 // and remove the role (and any potentially blocked role pairings) from the pool(s)
-                var roleType = rolesToAssign.Keys.ElementAt(rnd.Next(0, rolesToAssign.Keys.Count()));
+                var roleType = rolesToAssign.Keys.ElementAt(rnd.Next(0, rolesToAssign.Keys.Count));
                 var players = roleType == RoleType.Crewmate || roleType == RoleType.Neutral
                     ? data.crewmates
                     : data.impostors;
@@ -269,7 +286,7 @@ namespace Modpack
                 // Randomly select a pool of role tickets to assign a role from next (Crewmate role, Neutral role or Impostor role) 
                 // then select one of the roles from the selected pool to a player 
                 // and remove all tickets of this role (and any potentially blocked role pairings) from the pool(s)
-                var roleType = rolesToAssign.Keys.ElementAt(rnd.Next(0, rolesToAssign.Keys.Count()));
+                var roleType = rolesToAssign.Keys.ElementAt(rnd.Next(0, rolesToAssign.Keys.Count));
                 var players = roleType == RoleType.Crewmate || roleType == RoleType.Neutral
                     ? data.crewmates
                     : data.impostors;
@@ -305,7 +322,7 @@ namespace Modpack
             }
         }
 
-        private static byte setRoleToRandomPlayer(byte roleId, List<PlayerControl> playerList, byte flag = 0,
+        private static byte setRoleToRandomPlayer(byte roleId, IList<PlayerControl> playerList, byte flag = 0,
             bool removePlayer = true)
         {
             var index = rnd.Next(0, playerList.Count);

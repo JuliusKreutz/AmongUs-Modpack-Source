@@ -36,7 +36,7 @@ namespace Modpack
             var passiveButton = button.GetComponent<PassiveButton>();
             passiveButton.OnClick = new Button.ButtonClickedEvent();
             passiveButton.OnClick.AddListener(onClick);
-            updateToggle(button, text, @on);
+            updateToggle(button, text, on);
 
             return button;
         }
